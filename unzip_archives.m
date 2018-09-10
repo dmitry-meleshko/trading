@@ -1,11 +1,11 @@
-function [] = unzip_archives()
+function [] = unzip_archives(QuotesMap)
     % unzip files for CSV importation
-    
-    in_dir = 'C:\Users\206522262\Desktop\EODData';
+
+    in_dir = sprintf('C:\\Users\\%s\\Desktop\\EODData', getenv('Username'));
     % directory for processed files
-    out_dir = 'C:\Users\206522262\Desktop\EODData\processed';
+    out_dir = sprintf('C:\\Users\\%s\\Desktop\\EODData\\processed', getenv('Username'));
     % temp dir used to unzip archives
-    tmp_dir = 'C:\Users\206522262\Desktop\EODData\tmp';
+    tmp_dir = sprintf('C:\\Users\\%s\\Desktop\\EODData\\tmp', getenv('Username'));
 
     if (~exist(out_dir, 'dir'))
         mkdir(out_dir)
