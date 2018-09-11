@@ -1,13 +1,5 @@
-function [] = load_quotes(QuotesMap)   
-    % future home of quotes data
-    %global AMEX FOREX INDEX NASDAQ NYSE;
-    AMEX = []; FOREX = []; INDEX = []; NASDAQ = []; NYSE = [];
-    
-    % load previously saved quotes
-    Q_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData', getenv('Username'));
-    Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
-    %Q_SRC = {'FOREX'};
-
+function [] = load_quotes(QuotesMap, Q_DIR, Q_SRC)
+    % take quotes data from MAT files and save in a map file
     for key = Q_SRC
         fname = fullfile(Q_DIR, sprintf('quotes_%s.mat', key{:}));
         if exist(fname, 'file') == 2
