@@ -7,6 +7,7 @@ if (~exist(OUT_DIR, 'dir'))
 end;
 
 Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+ANNUAL_DAYS = 252;  % that's how many *trading* days there are
 
 % load previously saved quotes
 QuotesMap = containers.Map();
@@ -27,8 +28,17 @@ load_quotes(QuotesMap, IN_DIR, Q_SRC);
          Quotes = QM(strcmp(QM.Symbol, T), [2:7]);
          
          % use closing price (index 5) and 20 day window
-         Vol = calc_volatility(Quotes{:,5}, 20);
+         Vol = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS);
+         Quotes.Vol10d = Vol;
+         
+         Vol = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS);
          Quotes.Vol20d = Vol;
+         
+         Vol = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS);
+         Quotes.Vol90d = Vol;
+         
+         Vol = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS);
+         Quotes.VolYear = Vol;
          
          %plot(Vol(21:end,2));
          fname = fullfile(OUT_DIR, sprintf('%s_%s.mat', exchange, T));
@@ -44,5 +54,5 @@ load_quotes(QuotesMap, IN_DIR, Q_SRC);
 %     60.16; 59.96; 59.51; 58.71; 62.33; 62.75; 62.72; 62.65; 61.17; 67.21
 % ];
 % 
-% FOO = calc_volatility(FOO, 20);
+% FOO = calc_volatility(FOO, 20, 252);
 % plot(FOO(21:end,2));   

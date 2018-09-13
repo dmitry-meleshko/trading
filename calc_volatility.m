@@ -1,11 +1,9 @@
-function [Vol] = calc_volatility(Series, window)
+function [Vol] = calc_volatility(Series, window, periods)
     % add column for volatility
     %Series = [Series zeros(length(Series), 1)];
     Vol = zeros(length(Series), 1);
 
     % convert series to natural log and diff each number with a previous entry
-    ANNUAL_DAYS = 252;  % that's ho many *trading* days there are
-
     for i = 1:length(Series)-window
         % get a window sized chunk of prices
         chunk = Series(i:window+i);
@@ -13,7 +11,7 @@ function [Vol] = calc_volatility(Series, window)
         log_change = diff(log(chunk));
         %mean_change = mean(log_change);
         std_change = std(log_change);
-        vol_annual = std_change * sqrt(ANNUAL_DAYS);    % annualize volatility
+        vol_annual = std_change * sqrt(periods);    % annualize volatility
         % assign volatility to the end of the sliding window
         Vol(i+window) = vol_annual;
     end
