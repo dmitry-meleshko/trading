@@ -28,17 +28,29 @@ load_quotes(QuotesMap, IN_DIR, Q_SRC);
          Quotes = QM(strcmp(QM.Symbol, T), [2:7]);
          
          % use closing price (index 5) and 20 day window
-         Vol = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS);
-         Quotes.Vol10d = Vol;
+         [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS);
+         Quotes.Vol10d = vol;
+         Quotes.StdLog10d = std_log;
+         Quotes.StdPrice10d = std_price;
+         Quotes.ChangeStd10d = std_change;
          
-         Vol = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS);
-         Quotes.Vol20d = Vol;
+         [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS);
+         Quotes.Vol20d = vol;
+         Quotes.StdLog20d = std_log;
+         Quotes.StdPrice20d = std_price;
+         Quotes.ChangeStd20d = std_change;
          
-         Vol = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS);
-         Quotes.Vol90d = Vol;
+         [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS);
+         Quotes.Vol90d = vol;
+         Quotes.StdLog90d = std_log;
+         Quotes.StdPrice90d = std_price;
+         Quotes.ChangeStd90d = std_change;
          
-         Vol = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS);
-         Quotes.VolYear = Vol;
+         [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS);
+         Quotes.VolYear = vol;
+         Quotes.StdLogYear = std_log;
+         Quotes.StdPriceYear = std_price;
+         Quotes.ChangeStdYear = std_change;
          
          %plot(Vol(21:end,2));
          fname = fullfile(OUT_DIR, sprintf('%s_%s.mat', exchange, T));
@@ -47,12 +59,12 @@ load_quotes(QuotesMap, IN_DIR, Q_SRC);
      end
  end
 
-
-% FOO = [
-%     71.75; 71.46; 70.99; 68.49; 69.10; 69.61; 67.72; 65.48; 66.31; 65.66;
-%     63.93; 63.19; 65.68; 67.32; 66.23; 64.31; 64.66; 63.99; 61.81; 61.67;
-%     60.16; 59.96; 59.51; 58.71; 62.33; 62.75; 62.72; 62.65; 61.17; 67.21
-% ];
-% 
-% FOO = calc_volatility(FOO, 20, 252);
-% plot(FOO(21:end,2));   
+  
+%  FOO = [
+%      47.58; 47.78 ; 48.09 ; 47.52; 48.47 ; 48.38; 49.30 ; 49.61 ; 50.03 ;
+%      51.65 ; 51.65 ; 51.57; 50.60; 50.45; 50.83 ; 51.08 ; 51.26 ; 50.89;
+%      50.51; 51.42 ; 52.09 ; 55.83 ; 55.79; 56.20
+%      ];
+%  
+%  [vol, std_log, std_price, std_change] = calc_volatility(FOO, 20, 252);
+%  plot(FOO(21:end,2));
