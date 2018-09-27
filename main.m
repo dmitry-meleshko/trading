@@ -29,28 +29,28 @@ load_quotes(QuotesMap, IN_DIR, Q_SRC);
          
          % use closing price (index 5) and 20 day window
          [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS);
-         Quotes.Vol10d = vol;
-         Quotes.StdLog10d = std_log;
-         Quotes.StdPrice10d = std_price;
-         Quotes.ChangeStd10d = std_change;
+         Quotes.SigmaYear10d = vol;
+         Quotes.SigmaDay10d = std_log;
+         Quotes.SigmaDayInBase10d = std_price;
+         Quotes.SigmaLastPrice10d = std_change;
          
          [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS);
-         Quotes.Vol20d = vol;
-         Quotes.StdLog20d = std_log;
-         Quotes.StdPrice20d = std_price;
-         Quotes.ChangeStd20d = std_change;
+         Quotes.SigmaYear20d = vol;
+         Quotes.SigmaDay20d = std_log;
+         Quotes.SigmaDayInBase20d = std_price;
+         Quotes.SigmaLastPrice20d = std_change;
          
          [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS);
-         Quotes.Vol90d = vol;
-         Quotes.StdLog90d = std_log;
-         Quotes.StdPrice90d = std_price;
-         Quotes.ChangeStd90d = std_change;
+         Quotes.SigmaYear90d = vol;
+         Quotes.SigmaDay90d = std_log;
+         Quotes.SigmaDayInBase90d = std_price;
+         Quotes.SigmaLastPrice90d = std_change;
          
          [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS);
-         Quotes.VolYear = vol;
-         Quotes.StdLogYear = std_log;
-         Quotes.StdPriceYear = std_price;
-         Quotes.ChangeStdYear = std_change;
+         Quotes.SigmaYear = vol;
+         Quotes.SigmaDayYear = std_log; % TODO: is this necessary?
+         Quotes.SigmaDayInBaseYear = std_price;
+         Quotes.SigmaLastPriceYear = std_change;
          
          %plot(Vol(21:end,2));
          fname = fullfile(OUT_DIR, sprintf('%s_%s.mat', exchange, T));
