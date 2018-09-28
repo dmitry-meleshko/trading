@@ -1,6 +1,6 @@
 function [] = unzip_archives(QuotesMap)
-    % unzip files for CSV importation
-
+    % unzip EODData files for CSV importation
+    
     in_dir = sprintf('C:\\Users\\%s\\Desktop\\EODData', getenv('Username'));
     % directory for processed files
     out_dir = sprintf('C:\\Users\\%s\\Desktop\\EODData\\processed', getenv('Username'));
