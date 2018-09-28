@@ -1,4 +1,5 @@
-% main
+% Step 2 - split EODData quotes_EXHCNAGE.mat files into individual tickers
+clc; clear all;
 
 IN_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData', getenv('Username'));
 OUT_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes', getenv('Username'));
@@ -7,7 +8,6 @@ if (~exist(OUT_DIR, 'dir'))
 end;
 
 Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
-ANNUAL_DAYS = 252;  % that's how many *trading* days there are
 
 % load previously saved quotes
 QuotesMap = containers.Map();

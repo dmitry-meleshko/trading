@@ -2,6 +2,34 @@ function Quotes = extend_quotes_with_volatility(Quotes)
     % Takes Quotes map from eod_quotes2tickers and expands daily data
     % by adding volatility for 10 day, 20 day, 90 day and annual windows.
     
+    ANNUAL_DAYS = 252;  % that's how many *trading* days there are
+    
+    % for short timelines return 0s and move on. Avoids size mismatch error
+    row_count = height(Quotes);
+    if row_count < 10
+        Quotes.SigmaYear10d = 0;
+        Quotes.SigmaDay10d = 0;
+        Quotes.SigmaDayInBase10d = 0;
+        Quotes.SigmaLastPrice10d = 0;
+        
+        Quotes.SigmaYear20d = 0;
+        Quotes.SigmaDay20d = 0;
+        Quotes.SigmaDayInBase20d = 0;
+        Quotes.SigmaLastPrice20d = 0;
+        
+        Quotes.SigmaYear90d = 0;
+        Quotes.SigmaDay90d = 0;
+        Quotes.SigmaDayInBase90d = 0;
+        Quotes.SigmaLastPrice90d = 0;
+        
+        Quotes.SigmaYear = 0;
+        Quotes.SigmaDayYear = 0;
+        Quotes.SigmaDayInBaseYear = 0;
+        Quotes.SigmaLastPriceYear = 0;
+        
+        return;
+    end
+
     % use closing price (index 5) and 20 day window
     [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS);
     Quotes.SigmaYear10d = vol;
