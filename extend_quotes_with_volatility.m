@@ -7,25 +7,26 @@ function Quotes = extend_quotes_with_volatility(Quotes)
     % for short timelines return 0s and move on. Avoids size mismatch error
     row_count = height(Quotes);
     if row_count < 10
-        Quotes.SigmaYear10d = 0;
-        Quotes.SigmaDay10d = 0;
-        Quotes.SigmaDayInBase10d = 0;
-        Quotes.SigmaLastPrice10d = 0;
+        % match the number of rows before assigning 0s
+        Quotes.SigmaYear10d = zeros(height(Quotes), 1);
+        Quotes.SigmaDay10d = zeros(height(Quotes), 1);
+        Quotes.SigmaDayInBase10d = zeros(height(Quotes), 1);
+        Quotes.SigmaLastPrice10d = zeros(height(Quotes), 1);
         
-        Quotes.SigmaYear20d = 0;
-        Quotes.SigmaDay20d = 0;
-        Quotes.SigmaDayInBase20d = 0;
-        Quotes.SigmaLastPrice20d = 0;
+        Quotes.SigmaYear20d = zeros(height(Quotes), 1);
+        Quotes.SigmaDay20d = zeros(height(Quotes), 1);
+        Quotes.SigmaDayInBase20d = zeros(height(Quotes), 1);
+        Quotes.SigmaLastPrice20d = zeros(height(Quotes), 1);
         
-        Quotes.SigmaYear90d = 0;
-        Quotes.SigmaDay90d = 0;
-        Quotes.SigmaDayInBase90d = 0;
-        Quotes.SigmaLastPrice90d = 0;
+        Quotes.SigmaYear90d = zeros(height(Quotes), 1);
+        Quotes.SigmaDay90d = zeros(height(Quotes), 1);
+        Quotes.SigmaDayInBase90d = zeros(height(Quotes), 1);
+        Quotes.SigmaLastPrice90d = zeros(height(Quotes), 1);
         
-        Quotes.SigmaYear = 0;
-        Quotes.SigmaDayYear = 0;
-        Quotes.SigmaDayInBaseYear = 0;
-        Quotes.SigmaLastPriceYear = 0;
+        Quotes.SigmaYear = zeros(height(Quotes), 1);
+        Quotes.SigmaDayYear = zeros(height(Quotes), 1);
+        Quotes.SigmaDayInBaseYear = zeros(height(Quotes), 1);
+        Quotes.SigmaLastPriceYear = zeros(height(Quotes), 1);
         
         return;
     end
