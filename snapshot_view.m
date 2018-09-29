@@ -19,10 +19,11 @@ snapshot_cells = cell(0, 24);   % declare empty cell array to hold snapshot
 for key = Q_SRC
     exchange = key{:};
     files = dir(fullfile(IN_DIR, sprintf('%s_*.mat', exchange)));
-
+    fprintf('Loading tickers from %s\n', exchange);
+    
     for i = 1:length(files)
         fname = fullfile(IN_DIR, files(i).name);
-        if exist(fname, 'file') == 2
+        if exist(fname, 'file') == 2    % 2 means file, not folder?
             [filepath,name,ext] = fileparts(fname);
             
             % valid filenames have EXCHANGE_TICKER.mat format
@@ -53,5 +54,9 @@ SummaryView = sortrows(SummaryView, [2, 3, 1], {'ascend' 'descend' 'ascend'} );
 
 fname = fullfile(OUT_DIR, 'SummaryView.mat');
 fprintf('Saving %s file\n', fname);
-save(fname, 'SummaryView', '-v7.3');
+save(fname, 'SummaryView', '-v7.3');    % .mat file
+fname = fullfile(OUT_DIR, 'SummaryView.csv');
+writetable(SummaryView, fname);
+
+% the end
 
