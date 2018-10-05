@@ -45,7 +45,8 @@ func main() {
 		os.Mkdir(OUT_CSV_DIR, os.ModeDir)
 	}
 
-	endDate := time.Now().Format("02-Jan-2006")
+	// Yahoo provides history up-to yesterday
+	endDate := time.Now().Add(-24 * time.Hour).Format("02-Jan-2006")
 
 	resultChan := make(chan ScrapeResult)
 
@@ -54,8 +55,12 @@ func main() {
 
 	// scrape all tickers
 
-	//	for i := range tickers {
-	for i := 0; i < 5; i++ {
+	for i := range tickers {
+		//for i := 0; i < 5; i++ {
+		if tickers[i].Date == endDate {
+			continue // history is up to date
+		}
+
 		// scrape historical price for ticker since the last date until now
 		go Scrape(tickers[i], endDate, resultChan)
 
