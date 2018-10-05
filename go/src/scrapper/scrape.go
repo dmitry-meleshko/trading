@@ -14,7 +14,7 @@ import (
 const YHIST_TMPL string = "https://finance.yahoo.com/quote/{TICKER}/history?" +
 	"period1={START_DATE}&period2={END_DATE}&interval=1d&filter=history&frequency=1d"
 
-func Scrape(ticker string, startDateStr string, endDateStr string) {
+func Scrape(ticker string, startDateStr string, endDateStr string) []TickerHistory {
 	startDate, err := time.Parse("02-Jan-2006", startDateStr) // 2006-01-02 is a template
 	if err != nil {
 		log.Fatalln(err)
@@ -26,9 +26,11 @@ func Scrape(ticker string, startDateStr string, endDateStr string) {
 	}
 	priceHist := scrapeYhoo(ticker, startDate, endDate)
 	fmt.Println(priceHist)
+
+	return priceHist
 }
 
-func scrapeYhoo(ticker string, startDate time.Time, endDate time.Time) [][]string {
+func scrapeYhoo(ticker string, startDate time.Time, endDate time.Time) []TickerHistory {
 	// convert template into a URL
 	YHIST_URL := strings.Replace(YHIST_TMPL, "{TICKER}", ticker, 1)
 	YHIST_URL = strings.Replace(YHIST_URL, "{START_DATE}", fmt.Sprintf("%v", startDate.Unix()), 1)
@@ -81,27 +83,31 @@ func parseYPriceTable(doc *goquery.Document) [][]string {
 	return priceHist
 }
 
-func cleanYPrice(priceHist [][]string) [][]string {
-	var priceClean [][]string
+func cleanYPrice(priceHist [][]string) []TickerHistory {
+	var priceClean []TickerHistory
 
 	for i := range priceHist {
-		// cut out Close, use AdjClose
-		priceRow := append(priceHist[i][:4], priceHist[i][5:]...)
+		var row TickerHistory
 
-		date, err := time.Parse("Jan 02, 2006", priceRow[0])
+		date, err := time.Parse("Jan 02, 2006", priceHist[i][0])
 		if err != nil {
 			continue // skip poorly formattd Date
 		}
-		priceRow[0] = date.Format("02-Jan-2006")
+		row.Date = date.Format("02-Jan-2006")
+		row.Open = priceHist[i][1]
+		row.High = priceHist[i][2]
+		row.Low = priceHist[i][3]
 
-		if _, err := strconv.ParseFloat(priceRow[4], 32); err != nil {
+		// skip Close, use AdjClose
+		if _, err := strconv.ParseFloat(priceHist[i][5], 32); err != nil {
 			continue // skip poorly formatted closing price
 		}
+		row.Close = priceHist[i][5]
 
 		// remove thousand's separator in Volume
-		priceRow[5] = strings.Replace(priceRow[5], ",", "", -1)
+		row.Volume = strings.Replace(priceHist[i][6], ",", "", -1)
 
-		priceClean = append(priceClean, priceRow)
+		priceClean = append(priceClean, row)
 	}
 
 	return priceClean

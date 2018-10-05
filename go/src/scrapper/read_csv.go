@@ -11,13 +11,34 @@ import (
 )
 
 const IN_CSV_FMT string = "C:\\Users\\%s\\Desktop\\EODData\\views\\SummaryView.csv"
+const OUT_CSV_DIR_FMT string = "C:\\Users\\%s\\Desktop\\EODData\\quotes\\yhoo"
 
 type Ticker struct {
-	Symbol string
+	Symbol   string
+	Exchange string
+	Date     string
+}
+
+type TickerHistory struct {
 	Date   string
+	Open   string
+	High   string
+	Low    string
+	Close  string
+	Volume string
 }
 
 func main() {
+	tickers := readCSV()
+	//fmt.Printf("%+v\n", ticker[0])
+
+	for i := range tickers {
+		history := Scrape(tickers[i].Symbol, tickers[i].Date, time.Now().Format("02-Jan-2006"))
+		writeCSV(tickers[i], history)
+	}
+}
+
+func readCSV() []Ticker {
 	var IN_CSV = fmt.Sprintf(IN_CSV_FMT, os.Getenv("Username"))
 	fmt.Println("Opening " + IN_CSV)
 	csvFile, _ := os.Open(IN_CSV)
@@ -37,12 +58,15 @@ func main() {
 		}
 
 		ticker = append(ticker, Ticker{
-			Symbol: line[0],
-			Date:   line[2],
+			Symbol:   line[0],
+			Exchange: line[1],
+			Date:     line[2],
 		})
 	}
-	//fmt.Printf("%+v\n", ticker[0])
 
-	Scrape(ticker[0].Symbol, ticker[0].Date, time.Now().Format("02-Jan-2006"))
+	return ticker
+}
+
+func writeCSV(ticker Ticker, history []TickerHistory) {
 
 }
