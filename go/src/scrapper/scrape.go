@@ -23,14 +23,15 @@ func Scrape(ticker Ticker, endDateStr string, resultChan chan<- ScrapeResult) {
 		resultChan <- scrapeRes
 	}()
 
-	startDate, err := time.Parse("02-Jan-2006", ticker.Date) // 2006-01-02 is a template
+	tzLoc, _ := time.LoadLocation("Local")
+	startDate, err := time.ParseInLocation("02-Jan-2006", ticker.Date, tzLoc) // 2006-01-02 is a template
 	if err != nil {
 		log.Println(err)
 		scrapeRes.Err = err
 		return
 	}
 
-	endDate, err := time.Parse("02-Jan-2006", endDateStr)
+	endDate, err := time.ParseInLocation("02-Jan-2006", endDateStr, tzLoc)
 	if err != nil {
 		log.Println(err)
 		scrapeRes.Err = err
