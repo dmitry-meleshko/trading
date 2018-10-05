@@ -28,6 +28,12 @@ type TickerHistory struct {
 	Volume string
 }
 
+type ScrapeResult struct {
+	Ticker  Ticker
+	History []TickerHistory
+	Err     error
+}
+
 func main() {
 	// fetch snapshot view with tickers and last date of available price
 	var IN_CSV = fmt.Sprintf(IN_CSV_FMT, os.Getenv("Username"))
@@ -39,14 +45,59 @@ func main() {
 		os.Mkdir(OUT_CSV_DIR, os.ModeDir)
 	}
 
-	for i := range tickers {
-		// scrape historical price for ticker since the last date until now
-		history := Scrape(tickers[i].Symbol, tickers[i].Date, time.Now().Format("02-Jan-2006"))
+	endDate := time.Now().Format("02-Jan-2006")
 
-		// write historical price for future processing by MATLAB
-		OUT_CSV := fmt.Sprintf("%s\\%s_%s.csv", OUT_CSV_DIR, tickers[i].Exchange, tickers[i].Symbol)
-		writeCSV(OUT_CSV, history)
+	resultChan := make(chan ScrapeResult)
+
+	// prepare to collect results fro mscrapping
+	go writeResults(OUT_CSV_DIR, endDate, resultChan)
+
+	// scrape all tickers
+
+	//	for i := range tickers {
+	for i := 0; i < 5; i++ {
+		// scrape historical price for ticker since the last date until now
+		go Scrape(tickers[i], endDate, resultChan)
+
+		// rate limit scrapping
+		<-time.Tick(1000 * time.Millisecond)
 	}
+
+	close(resultChan)
+}
+
+func writeResults(OUT_CSV_DIR string, endDateStr string, resultChan <-chan ScrapeResult) {
+	// record failures, if any, to timestamped errors file
+	FAIL_CSV := fmt.Sprintf("%s\\errors_%s.csv", OUT_CSV_DIR, time.Now().Format("20060102150405"))
+
+	failFile, err := os.Create(FAIL_CSV)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer failFile.Close()
+
+	failWriter := csv.NewWriter(failFile)
+	defer failWriter.Flush()
+	failWriter.Write([]string{"Symbol", "Exchange", "StartDate", "EndDate", "Error"})
+
+	for {
+		r, ok := <-resultChan
+		if ok == false {
+			break
+		}
+		if r.Err != nil {
+			failWriter.Write(
+				[]string{r.Ticker.Symbol, r.Ticker.Exchange, r.Ticker.Date, endDateStr, r.Err.Error()})
+			failWriter.Flush()
+			log.Printf("Failed to scrape %s: %s", r.Ticker.Symbol, r.Err.Error())
+		} else {
+			// write historical price for future processing by MATLAB
+			OUT_CSV := fmt.Sprintf("%s\\%s_%s.csv", OUT_CSV_DIR, r.Ticker.Exchange, r.Ticker.Symbol)
+			writeCSV(OUT_CSV, r.History)
+		}
+	}
+
+	return
 }
 
 func readCSV(IN_CSV string) []Ticker {

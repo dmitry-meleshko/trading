@@ -14,55 +14,93 @@ import (
 const YHIST_TMPL string = "https://finance.yahoo.com/quote/{TICKER}/history?" +
 	"period1={START_DATE}&period2={END_DATE}&interval=1d&filter=history&frequency=1d"
 
-func Scrape(ticker string, startDateStr string, endDateStr string) []TickerHistory {
-	startDate, err := time.Parse("02-Jan-2006", startDateStr) // 2006-01-02 is a template
+func Scrape(ticker Ticker, endDateStr string, resultChan chan<- ScrapeResult) {
+	var scrapeRes ScrapeResult
+	scrapeRes.Ticker = ticker
+
+	defer func() {
+		//fmt.Println(scrapeRes.History)
+		resultChan <- scrapeRes
+	}()
+
+	startDate, err := time.Parse("02-Jan-2006", ticker.Date) // 2006-01-02 is a template
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		scrapeRes.Err = err
+		return
 	}
 
 	endDate, err := time.Parse("02-Jan-2006", endDateStr)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		scrapeRes.Err = err
+		return
 	}
-	priceHist := scrapeYhoo(ticker, startDate, endDate)
-	fmt.Println(priceHist)
 
-	return priceHist
+	priceHist, err := scrapeYhoo(ticker.Symbol, startDate, endDate)
+	if err != nil {
+		log.Println(err)
+		scrapeRes.Err = err
+		return
+	}
+
+	scrapeRes.History = priceHist
+
+	return
 }
 
-func scrapeYhoo(ticker string, startDate time.Time, endDate time.Time) []TickerHistory {
+func scrapeYhoo(ticker string, startDate time.Time, endDate time.Time) ([]TickerHistory, error) {
 	// convert template into a URL
 	YHIST_URL := strings.Replace(YHIST_TMPL, "{TICKER}", ticker, 1)
 	YHIST_URL = strings.Replace(YHIST_URL, "{START_DATE}", fmt.Sprintf("%v", startDate.Unix()), 1)
 	YHIST_URL = strings.Replace(YHIST_URL, "{END_DATE}", fmt.Sprintf("%v", endDate.Unix()), 1)
 	fmt.Printf("Fetching %s\n", YHIST_URL)
 
-	doc := getUrl(YHIST_URL)
+	doc, err := getUrl(YHIST_URL)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-	//var metaDescription string
-	pageTitle := doc.Find("title").Contents().Text()
-	fmt.Printf("Page Title: '%s\n", pageTitle)
+	//pageTitle := doc.Find("title").Contents().Text()
+	//fmt.Printf("Page Title: '%s\n", pageTitle)
 
-	priceHist := parseYPriceTable(doc)
+	priceHist, err := parseYPriceTable(doc)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
 	// cleanup before returning to caller
-	priceClean := cleanYPrice(priceHist)
+	priceClean, err := cleanYPrice(priceHist)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-	return priceClean
+	return priceClean, nil
 }
 
-func parseYPriceTable(doc *goquery.Document) [][]string {
+func parseYPriceTable(doc *goquery.Document) ([][]string, error) {
 	// verify headers
 	y_headers := []string{"Date", "Open", "High", "Low", "Close*", "Adj Close**", "Volume"}
-	doc.Find("table[data-test='historical-prices'] thead tr:first-child th").Each(
-		func(i int, item *goquery.Selection) {
+	var headersMatch bool
+	doc.Find("table[data-test='historical-prices'] thead tr:first-child th").EachWithBreak(
+		func(i int, item *goquery.Selection) bool {
 			td := item.Text()
-			fmt.Printf("%s\t", td)
+			//fmt.Printf("%s\t", td)
 			if y_headers[i] != td {
-				log.Fatalf("Mismatching Yahoo headers: '%s' != '%s'", y_headers[i], td)
+				log.Printf("Mismatching Yahoo headers: '%s' != '%s'", y_headers[i], td)
+				headersMatch = false
+				return false
 			}
+			headersMatch = true
+			return true
 		})
-	fmt.Println()
+	if !headersMatch {
+		return nil, fmt.Errorf("Failed to validate Yahoo headers")
+	}
+	//fmt.Println()
 
 	// pull data into new array
 	var priceHist [][]string
@@ -80,10 +118,10 @@ func parseYPriceTable(doc *goquery.Document) [][]string {
 			priceHist = append(priceHist, row)
 		})
 
-	return priceHist
+	return priceHist, nil
 }
 
-func cleanYPrice(priceHist [][]string) []TickerHistory {
+func cleanYPrice(priceHist [][]string) ([]TickerHistory, error) {
 	var priceClean []TickerHistory
 
 	for i := range priceHist {
@@ -91,18 +129,26 @@ func cleanYPrice(priceHist [][]string) []TickerHistory {
 
 		date, err := time.Parse("Jan 02, 2006", priceHist[i][0])
 		if err != nil {
-			continue // skip poorly formattd Date
+			continue // skip poorly formatted Date
 		}
 		row.Date = date.Format("02-Jan-2006")
+
+		// confirm price formatting, skip Close price.
+		isPriceClean := true
+		for _, j := range []int{1, 2, 3, 5} {
+			if _, err := strconv.ParseFloat(priceHist[i][j], 32); err != nil {
+				isPriceClean = false
+				break
+			}
+		}
+		if !isPriceClean {
+			continue // next history record
+		}
+
 		row.Open = priceHist[i][1]
 		row.High = priceHist[i][2]
 		row.Low = priceHist[i][3]
-
-		// skip Close, use AdjClose
-		if _, err := strconv.ParseFloat(priceHist[i][5], 32); err != nil {
-			continue // skip poorly formatted closing price
-		}
-		row.Close = priceHist[i][5]
+		row.Close = priceHist[i][5] // use Adj.Close instead
 
 		// remove thousand's separator in Volume
 		row.Volume = strings.Replace(priceHist[i][6], ",", "", -1)
@@ -110,18 +156,19 @@ func cleanYPrice(priceHist [][]string) []TickerHistory {
 		priceClean = append(priceClean, row)
 	}
 
-	return priceClean
+	return priceClean, nil
 }
 
 // generic URL fetcher, with custom agent signature
-func getUrl(URL string) *goquery.Document {
+func getUrl(URL string) (*goquery.Document, error) {
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return nil, err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
@@ -129,17 +176,20 @@ func getUrl(URL string) *goquery.Document {
 
 	res, err := client.Do(req)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		log.Fatalln("Status code error: %d %s", res.StatusCode, res.Status)
+		log.Printf("Status code error: %d %s", res.StatusCode, res.Status)
+		return nil, err
 	}
 
 	doc, err := goquery.NewDocumentFromResponse(res)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return nil, err
 	}
 
-	return doc
+	return doc, nil
 }
