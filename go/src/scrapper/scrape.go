@@ -40,7 +40,7 @@ func Scrape(ticker Ticker, endDateStr string, resultChan chan<- ScrapeResult) {
 
 	priceHist, err := scrapeYhoo(ticker.Symbol, startDate, endDate)
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		scrapeRes.Err = err
 		return
 	}
@@ -68,14 +68,14 @@ func scrapeYhoo(ticker string, startDate time.Time, endDate time.Time) ([]Ticker
 
 	priceHist, err := parseYPriceTable(doc)
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		return nil, err
 	}
 
 	// cleanup before returning to caller
 	priceClean, err := cleanYPrice(priceHist)
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		return nil, err
 	}
 
