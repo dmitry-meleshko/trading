@@ -1,3 +1,6 @@
+% Helper function. Called from:
+%   eod_quotes2tickers.m
+%   yhoo_append2tickers.m
 function Quotes = extend_quotes_with_volatility(Quotes)
     % Takes Quotes map from eod_quotes2tickers and expands daily data
     % by adding volatility for 10 day, 20 day, 90 day and annual windows.

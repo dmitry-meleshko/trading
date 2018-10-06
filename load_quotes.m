@@ -1,3 +1,4 @@
+% Helper function. Called from eod_quotes2tickers.m
 function [] = load_quotes(QuotesMap, Q_DIR, Q_SRC)
     % take quotes data from MAT files and save in a map file
     for key = Q_SRC

@@ -1,3 +1,4 @@
+% Helper function. Called from get_eod_quotes.m
 function [] = unzip_archives(QuotesMap)
     % unzip EODData files for CSV importation
     

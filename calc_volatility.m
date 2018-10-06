@@ -1,3 +1,5 @@
+% Helper function. Called from:
+%   extend_quotes_with_volatility.m
 function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = calc_volatility(Series, window, periods)
 
     sigma_year = zeros(length(Series), 1); % series volatility for the window

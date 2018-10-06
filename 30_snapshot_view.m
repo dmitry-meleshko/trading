@@ -1,4 +1,4 @@
-% snapshot view on day X for all tickers
+% Snapshot view on day X for all tickers
 % last price
 % series volatility - 252 days?
 % high / low volatility
