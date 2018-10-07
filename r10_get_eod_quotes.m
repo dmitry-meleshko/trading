@@ -1,4 +1,4 @@
-function [] = get_eod_quotes()
+function [] = r10_get_eod_quotes()
     % Step 1 for EODData import
     % Loads zipped CSV files and saves data in binary .mat workspace
     
