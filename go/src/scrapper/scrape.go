@@ -151,6 +151,10 @@ func cleanYPrice(priceHist [][]string) ([]TickerHistory, error) {
 		row.Low = priceHist[i][3]
 		row.Close = priceHist[i][5] // use Adj.Close instead
 
+		if priceHist[i][6] == "-" {
+			priceHist[i][6] = "0" // no trades happened this day
+		}
+
 		// remove thousand's separator in Volume
 		row.Volume = strings.Replace(priceHist[i][6], ",", "", -1)
 
