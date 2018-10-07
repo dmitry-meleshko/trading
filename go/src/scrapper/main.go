@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -48,6 +49,12 @@ func main() {
 	// Yahoo provides history up-to yesterday
 	endDate := time.Now().Add(-24 * time.Hour).Format("02-Jan-2006")
 
+	endDatePtr := flag.String("end", endDate, "End Date in DD-MMM-YYYY (02-Jan-2006) format")
+	flag.Parse()
+
+	if _, err := time.Parse("02-Jan-2006", *endDatePtr); err == nil {
+		endDate = *endDatePtr
+	}
 	resultChan := make(chan ScrapeResult)
 
 	// prepare to collect results fro mscrapping
