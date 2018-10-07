@@ -12,6 +12,19 @@ function [] = unzip_archives(QuotesMap)
         mkdir(out_dir)
     end;
     
+    % import specs
+    % Format string for each line of text:
+    %   column1: text (%s)
+    %	column2: datetimes (%{dd-MMM-yyyy}D)
+    %   column3: double (%f)
+    %	column4: double (%f)
+    %   column5: double (%f)
+    %	column6: double (%f)
+    %   column7: double (%f)
+    % For more information, see the TEXTSCAN documentation.
+    formatSpec = '%s%{dd-MMM-yyyy}D%f%f%f%f%f%[^\n\r]';
+    headers = {'Symbol','Date','Open','High','Low','Close','Volume'};
+    
     % wipe out data from previous run
     recreate_dir(tmp_dir);
     zip = dir(fullfile(in_dir, '*.zip'));
@@ -31,8 +44,9 @@ function [] = unzip_archives(QuotesMap)
         unzip(fullfile(in_dir, zip_file), tmp_dir);
         csv = dir(fullfile(tmp_dir, '*.csv'));
         quotes = [];
+        
         for i = 1:length(csv)
-            temp = import_quotes_csv(fullfile(tmp_dir, csv(i).name));
+            temp = import_quotes_csv(fullfile(tmp_dir, csv(i).name), formatSpec, headers);
             quotes = [quotes; temp];
         end
         

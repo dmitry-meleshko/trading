@@ -1,4 +1,4 @@
-function Quotes = import_quotes_csv(filename, startRow, endRow)
+function Quotes = import_quotes_csv(filename, formatSpec, headers, startRow, endRow)
 %IMPORTFILE Import numeric data from a text file as a matrix.
 %   Quotes = import_quotes_csv(FILENAME) Reads data from text file
 %   FILENAME for the default selection.
@@ -15,21 +15,10 @@ function Quotes = import_quotes_csv(filename, startRow, endRow)
 
 %% Initialize variables.
 delimiter = ',';
-if nargin<=2
+if nargin<=4
     startRow = 2;
     endRow = inf;
 end
-
-%% Format string for each line of text:
-%   column1: text (%s)
-%	column2: datetimes (%{dd-MMM-yyyy}D)
-%   column3: double (%f)
-%	column4: double (%f)
-%   column5: double (%f)
-%	column6: double (%f)
-%   column7: double (%f)
-% For more information, see the TEXTSCAN documentation.
-formatSpec = '%s%{dd-MMM-yyyy}D%f%f%f%f%f%[^\n\r]';
 
 %% Open the text file.
 fileID = fopen(filename,'r');
@@ -57,7 +46,7 @@ fclose(fileID);
 % script.
 
 %% Create output variable
-Quotes = table(dataArray{1:end-1}, 'VariableNames', {'Symbol','Date','Open','High','Low','Close','Volume'});
+Quotes = table(dataArray{1:end-1}, 'VariableNames', headers);
 
 % For code requiring serial dates (datenum) instead of datetime, uncomment
 % the following line(s) below to return the imported dates as datenum(s).
