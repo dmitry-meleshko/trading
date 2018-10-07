@@ -1,11 +1,15 @@
 % Helper function. Called from:
 %   eod_quotes2tickers.m
 %   yhoo_append2tickers.m
-function Quotes = extend_quotes_with_volatility(Quotes)
+function Quotes = extend_quotes_with_volatility(Quotes, startIndex)
     % Takes Quotes map from eod_quotes2tickers and expands daily data
     % by adding volatility for 10 day, 20 day, 90 day and annual windows.
     
     ANNUAL_DAYS = 252;  % that's how many *trading* days there are
+    
+    if nargin<=2
+        startIndex = 1;
+    end
     
     % for short timelines return 0s and move on. Avoids size mismatch error
     row_count = height(Quotes);
@@ -35,25 +39,25 @@ function Quotes = extend_quotes_with_volatility(Quotes)
     end
 
     % use closing price (index 5) and 20 day window
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS);
+    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear10d = vol;
     Quotes.SigmaDay10d = std_log;
     Quotes.SigmaDayInBase10d = std_price;
     Quotes.SigmaLastPrice10d = std_change;
 
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS);
+    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear20d = vol;
     Quotes.SigmaDay20d = std_log;
     Quotes.SigmaDayInBase20d = std_price;
     Quotes.SigmaLastPrice20d = std_change;
 
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS);
+    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear90d = vol;
     Quotes.SigmaDay90d = std_log;
     Quotes.SigmaDayInBase90d = std_price;
     Quotes.SigmaLastPrice90d = std_change;
 
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS);
+    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear = vol;
     Quotes.SigmaDayYear = std_log; % TODO: is this necessary?
     Quotes.SigmaDayInBaseYear = std_price;

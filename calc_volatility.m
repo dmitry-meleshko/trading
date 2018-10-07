@@ -1,7 +1,10 @@
 % Helper function. Called from:
 %   extend_quotes_with_volatility.m
-function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = calc_volatility(Series, window, periods)
-
+function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = calc_volatility(Series, window, periods, startIndex)
+    if nargin<=4
+        startIndex = 1;
+    end
+    
     sigma_year = zeros(length(Series), 1); % series volatility for the window
     sigma_daily = zeros(length(Series), 1); % standard deviation of log price
     sigma_daily_in_base = zeros(length(Series), 1); % standard deviation in base currency (USD)
@@ -9,7 +12,7 @@ function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = c
     sigma_of_last_price = [];
 
     % convert series to natural log and diff each number with a previous entry
-    for i = 1:length(Series)-window
+    for i = startIndex:length(Series)-window
         % get a window sized chunk of prices
         chunk = Series(i:window+i);
         % return = ln(Price2 / Price1) = ln(Price2) - ln(Price1)
