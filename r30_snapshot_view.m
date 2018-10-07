@@ -13,6 +13,7 @@ function [] = r30_snapshot_view()
     end;
 
     Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+    Q_SRC = {'AMEX', 'NASDAQ', 'NYSE'};
     ANNUAL_DAYS = 252;  % that's how many *trading* days there are
 
     snapshot_cells = cell(0, 24);   % declare empty cell array to hold snapshot
@@ -51,7 +52,7 @@ function [] = r30_snapshot_view()
     col_names = Quotes.Properties.VariableNames;
     SummaryView = cell2table(snapshot_cells,  'VariableNames', {'Ticker' 'Exchange' col_names{:}});
     % sort by Exchange, Date, Ticker
-    SummaryView = sortrows(SummaryView, [2, 3, 1], {'ascend' 'descend' 'ascend'} );
+    SummaryView = sortrows(SummaryView, [3, 2, 1], {'descend' 'descend' 'ascend'} );
 
     fname = fullfile(OUT_DIR, 'SummaryView.mat');
     fprintf('Saving %s file\n', fname);
