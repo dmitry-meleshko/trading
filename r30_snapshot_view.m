@@ -12,7 +12,7 @@ function [] = r30_snapshot_view()
         mkdir(OUT_DIR)
     end;
 
-    Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+    %Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
     Q_SRC = {'AMEX', 'NASDAQ', 'NYSE'};
     ANNUAL_DAYS = 252;  % that's how many *trading* days there are
 

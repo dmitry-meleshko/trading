@@ -11,7 +11,8 @@ function [] = r40_yhoo_append2tickers()
     
     ANNUAL_DAYS = 252;  % that's how many *trading* days there are
 
-    Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+    %Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+    Q_SRC = {'AMEX', 'NASDAQ', 'NYSE'};
 
     % import specs
     % Format string for each line of text:
