@@ -16,6 +16,7 @@ const OUT_CSV_DIR_FMT string = "C:\\Users\\%s\\Desktop\\EODData\\quotes\\yhoo"
 
 type Ticker struct {
 	Symbol   string
+	YSymbol  string
 	Exchange string
 	Date     string
 }
@@ -46,15 +47,8 @@ func main() {
 		os.Mkdir(OUT_CSV_DIR, os.ModeDir)
 	}
 
-	// Yahoo provides history up-to yesterday
-	endDate := time.Now().Add(-24 * time.Hour).Format("02-Jan-2006")
+	endDate, ignoreTickers, mapTickers := getFlags()
 
-	endDatePtr := flag.String("end", endDate, "End Date in DD-MMM-YYYY (02-Jan-2006) format")
-	flag.Parse()
-
-	if _, err := time.Parse("02-Jan-2006", *endDatePtr); err == nil {
-		endDate = *endDatePtr
-	}
 	resultChan := make(chan ScrapeResult)
 
 	// prepare to collect results fro mscrapping
@@ -68,6 +62,18 @@ func main() {
 			continue // history is up to date
 		}
 
+		key := fmt.Sprintf("%s_%s", tickers[i].Symbol, tickers[i].Exchange)
+		if _, ok := ignoreTickers[key]; ok {
+			continue // skip this ticker
+		}
+
+		// use different symbol if available in mapping file
+		if _, ok := mapTickers[key]; ok {
+			tickers[i].YSymbol = mapTickers[key]
+		} else {
+			tickers[i].YSymbol = tickers[i].Symbol
+		}
+
 		// scrape historical price for ticker since the last date until now
 		go Scrape(tickers[i], endDate, resultChan)
 
@@ -76,6 +82,69 @@ func main() {
 	}
 
 	close(resultChan)
+}
+
+func getFlags() (string, map[string]bool, map[string]string) {
+	// Yahoo provides history up-to yesterday
+	endDate := time.Now().Add(-24 * time.Hour).Format("02-Jan-2006")
+	// tickers to skip during processing
+	ignoreTickers := make(map[string]bool)
+	mapTickers := make(map[string]string)
+
+	endDatePtr := flag.String("end", endDate, "End Date in DD-MMM-YYYY (02-Jan-2006) format")
+	ignoreFilePtr := flag.String("ignore", "", "CVS file listing tickers to ignore in TICKER,EXCHANGE format")
+	mapFilePtr := flag.String("map", "", "CSV file with ticker mappings in TICKER,EXCHANGE,MAP format")
+	flag.Parse()
+
+	if _, err := time.Parse("02-Jan-2006", *endDatePtr); err == nil {
+		endDate = *endDatePtr
+	}
+
+	if *ignoreFilePtr != "" {
+		ignoreFile, err := os.Open(*ignoreFilePtr)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer ignoreFile.Close()
+
+		reader := csv.NewReader(bufio.NewReader(ignoreFile))
+
+		for {
+			line, err := reader.Read()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				log.Fatalln(err)
+			}
+
+			key := fmt.Sprintf("%s_%s", line[0], line[1])
+			ignoreTickers[key] = true
+		}
+	}
+
+	if *mapFilePtr != "" {
+		mapFile, err := os.Open(*mapFilePtr)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer mapFile.Close()
+
+		reader := csv.NewReader(bufio.NewReader(mapFile))
+
+		for {
+			line, err := reader.Read()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				log.Fatalln(err)
+			}
+
+			key := fmt.Sprintf("%s_%s", line[0], line[1])
+			mapTickers[key] = line[2]
+		}
+	}
+
+	return endDate, ignoreTickers, mapTickers
 }
 
 func writeResults(OUT_CSV_DIR string, endDateStr string, resultChan <-chan ScrapeResult) {

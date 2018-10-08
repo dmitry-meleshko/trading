@@ -38,7 +38,7 @@ func Scrape(ticker Ticker, endDateStr string, resultChan chan<- ScrapeResult) {
 		return
 	}
 
-	priceHist, err := scrapeYhoo(ticker.Symbol, startDate, endDate)
+	priceHist, err := scrapeYhoo(ticker.YSymbol, startDate, endDate)
 	if err != nil {
 		//log.Println(err)
 		scrapeRes.Err = err
@@ -187,7 +187,7 @@ func getUrl(URL string) (*goquery.Document, error) {
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
 		log.Printf("Status code error: %d %s", res.StatusCode, res.Status)
-		return nil, err
+		return nil, fmt.Errorf("Status code error %d for URL %s", res.StatusCode, URL)
 	}
 
 	doc, err := goquery.NewDocumentFromResponse(res)
