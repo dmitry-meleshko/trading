@@ -64,12 +64,14 @@ func main() {
 
 		key := fmt.Sprintf("%s_%s", tickers[i].Symbol, tickers[i].Exchange)
 		if _, ok := ignoreTickers[key]; ok {
+			log.Printf("Ignoring ticker %s", tickers[i].Symbol)
 			continue // skip this ticker
 		}
 
 		// use different symbol if available in mapping file
 		if _, ok := mapTickers[key]; ok {
 			tickers[i].YSymbol = mapTickers[key]
+			log.Printf("Mapped ticker %s to %s", tickers[i].Symbol, tickers[i].YSymbol)
 		} else {
 			tickers[i].YSymbol = tickers[i].Symbol
 		}
@@ -78,7 +80,7 @@ func main() {
 		go Scrape(tickers[i], endDate, resultChan)
 
 		// rate limit scrapping
-		<-time.Tick(1000 * time.Millisecond)
+		<-time.Tick(1500 * time.Millisecond)
 	}
 
 	close(resultChan)
@@ -98,6 +100,7 @@ func getFlags() (string, map[string]bool, map[string]string) {
 
 	if _, err := time.Parse("02-Jan-2006", *endDatePtr); err == nil {
 		endDate = *endDatePtr
+		log.Printf("CONFIG: End date is %v", endDate)
 	}
 
 	if *ignoreFilePtr != "" {
@@ -120,6 +123,7 @@ func getFlags() (string, map[string]bool, map[string]string) {
 			key := fmt.Sprintf("%s_%s", line[0], line[1])
 			ignoreTickers[key] = true
 		}
+		log.Printf("CONFIG: Ignoring %d tickers", len(ignoreTickers))
 	}
 
 	if *mapFilePtr != "" {
@@ -142,6 +146,7 @@ func getFlags() (string, map[string]bool, map[string]string) {
 			key := fmt.Sprintf("%s_%s", line[0], line[1])
 			mapTickers[key] = line[2]
 		}
+		log.Printf("CONFIG: Mapped %d tickers", len(mapTickers))
 	}
 
 	return endDate, ignoreTickers, mapTickers
