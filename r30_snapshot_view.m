@@ -4,7 +4,7 @@ function [] = r30_snapshot_view()
     % series volatility - 252 days?
     % high / low volatility
     % 10 day vol, 20 day vol, 90 day vol
-    clc; clear all;
+    clc; clear; close all;
 
     IN_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes', getenv('Username'));
     OUT_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\views', getenv('Username'));

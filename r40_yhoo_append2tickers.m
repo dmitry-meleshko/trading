@@ -1,7 +1,7 @@
 function [] = r40_yhoo_append2tickers()
     % Step 4 - append Y! history to EODData tickers in quotes\Exchange_Ticker.mat files
     % Continue to Step 3 to update Snapshot views with new data
-    clc; clear all;
+    clc; clear; close all;
 
     IN_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes\\yhoo', getenv('Username'));
     OUT_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes', getenv('Username'));

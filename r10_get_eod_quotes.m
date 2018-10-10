@@ -2,6 +2,8 @@ function [] = r10_get_eod_quotes()
     % Step 1 for EODData import
     % Loads zipped CSV files and saves data in binary .mat workspace
     
+    clc; clear; close all;
+    
     % future home of quotes data
     AMEX = []; FOREX = []; INDEX = []; NASDAQ = []; NYSE = [];
     

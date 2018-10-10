@@ -1,6 +1,8 @@
 % Helper function. Called from:
 %   extend_quotes_with_volatility.m
-function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = calc_volatility(Series, window, periods, startIndex)
+function [sigma_year, sigma_daily, sigma_daily_in_base, ...
+            sigma_of_last_price, skew_daily, kurt_daily] ...
+                = calc_volatility(Series, window, periods, startIndex)
     if nargin<=4
         startIndex = 1;
     end
@@ -8,6 +10,8 @@ function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = c
     sigma_year = zeros(length(Series), 1); % series volatility for the window
     sigma_daily = zeros(length(Series), 1); % standard deviation of log price
     sigma_daily_in_base = zeros(length(Series), 1); % standard deviation in base currency (USD)
+    skew_daily = zeros(length(Series), 1); % skewness
+    kurt_daily = zeros(length(Series), 1); % kurtosis
     % most recent price change expressed in STDEV of the previous window
     sigma_of_last_price = [];
 
@@ -19,6 +23,8 @@ function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = c
         log_change = diff(log(chunk));  % vectorized substraction
         %mean_change = mean(log_change);
         sigma_of_log_change = std(log_change);
+        skew_daily(i+window) = skewness(log_change, 0);  % zero flag for data sample
+        kurt_daily(i+window) = kurtosis(log_change, 0);
         % annualize volatility and save at the end of the window
         sigma_year(i+window) = sigma_of_log_change * sqrt(periods);
         sigma_daily(i+window) = sigma_of_log_change;
@@ -29,7 +35,7 @@ function [sigma_year, sigma_daily, sigma_daily_in_base, sigma_of_last_price] = c
     % look back at the preceding window, take last STDEV expressed in $
     % and use it to divide current price change = current spike in STDEV
     price_diff = diff(Series);
-    prev_std_price = sigma_daily_in_base(2:end);  % drop 1st empty value or alignment
+    prev_std_price = sigma_daily_in_base(2:end);  % drop 1st empty value for alignment
     prev_std_price = prev_std_price(1:end-1);   % shifted to previous row
     sigma_of_last_price = price_diff(2:end) ./ prev_std_price;
     sigma_of_last_price(~isfinite(sigma_of_last_price)) = 0;  % clean up after division by 0

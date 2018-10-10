@@ -19,49 +19,65 @@ function Quotes = extend_quotes_with_volatility(Quotes, startIndex)
         Quotes.SigmaDay10d = zeros(height(Quotes), 1);
         Quotes.SigmaDayInBase10d = zeros(height(Quotes), 1);
         Quotes.SigmaLastPrice10d = zeros(height(Quotes), 1);
+        Quotes.Skewness10d = zeros(height(Quotes), 1);
+        Quotes.Kurtosis10d = zeros(height(Quotes), 1);
         
         Quotes.SigmaYear20d = zeros(height(Quotes), 1);
         Quotes.SigmaDay20d = zeros(height(Quotes), 1);
         Quotes.SigmaDayInBase20d = zeros(height(Quotes), 1);
         Quotes.SigmaLastPrice20d = zeros(height(Quotes), 1);
+        Quotes.Skewness20d = zeros(height(Quotes), 1);
+        Quotes.Kurtosis20d = zeros(height(Quotes), 1);
         
         Quotes.SigmaYear90d = zeros(height(Quotes), 1);
         Quotes.SigmaDay90d = zeros(height(Quotes), 1);
         Quotes.SigmaDayInBase90d = zeros(height(Quotes), 1);
         Quotes.SigmaLastPrice90d = zeros(height(Quotes), 1);
+        Quotes.Skewness90d = zeros(height(Quotes), 1);
+        Quotes.Kurtosis90d = zeros(height(Quotes), 1);
         
         Quotes.SigmaYear = zeros(height(Quotes), 1);
         Quotes.SigmaDayYear = zeros(height(Quotes), 1);
         Quotes.SigmaDayInBaseYear = zeros(height(Quotes), 1);
         Quotes.SigmaLastPriceYear = zeros(height(Quotes), 1);
+        Quotes.SkewnessYear = zeros(height(Quotes), 1);
+        Quotes.KurtosisYear = zeros(height(Quotes), 1);
         
         return;
     end
 
     % use closing price (index 5) and 20 day window
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS, startIndex);
+    [vol, std_log, std_price, std_change, skew, kurt] = calc_volatility(Quotes{:,5}, 10, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear10d = vol;
     Quotes.SigmaDay10d = std_log;
     Quotes.SigmaDayInBase10d = std_price;
     Quotes.SigmaLastPrice10d = std_change;
+    Quotes.Skewness10d = skew;
+    Quotes.Kurtosis10d = kurt;
 
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS, startIndex);
+    [vol, std_log, std_price, std_change, skew, kurt] = calc_volatility(Quotes{:,5}, 20, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear20d = vol;
     Quotes.SigmaDay20d = std_log;
     Quotes.SigmaDayInBase20d = std_price;
     Quotes.SigmaLastPrice20d = std_change;
+    Quotes.Skewness20d = skew;
+    Quotes.Kurtosis20d = kurt;
 
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS, startIndex);
+    [vol, std_log, std_price, std_change, skew, kurt] = calc_volatility(Quotes{:,5}, 90, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear90d = vol;
     Quotes.SigmaDay90d = std_log;
     Quotes.SigmaDayInBase90d = std_price;
     Quotes.SigmaLastPrice90d = std_change;
+    Quotes.Skewness90d = skew;
+    Quotes.Kurtosis90d = kurt;
 
-    [vol, std_log, std_price, std_change] = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS, startIndex);
+    [vol, std_log, std_price, std_change, skew, kurt] = calc_volatility(Quotes{:,5}, ANNUAL_DAYS, ANNUAL_DAYS, startIndex);
     Quotes.SigmaYear = vol;
     Quotes.SigmaDayYear = std_log; % TODO: is this necessary?
     Quotes.SigmaDayInBaseYear = std_price;
     Quotes.SigmaLastPriceYear = std_change;
+    Quotes.SkewnessYear = skew;
+    Quotes.KurtosisYear = kurt;
 end
 
 

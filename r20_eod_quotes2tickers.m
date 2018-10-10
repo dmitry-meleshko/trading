@@ -1,6 +1,6 @@
 function [] = r20_eod_quotes2tickers()
     % Step 2 - split EODData quotes_EXHCNAGE.mat files into individual tickers
-    clc; clear all;
+    clc; clear; close all;
 
     IN_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData', getenv('Username'));
     OUT_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes', getenv('Username'));
