@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type Ticker struct {
 	Symbol   string
 	YSymbol  string
 	Exchange string
+	Options  bool
 	Date     string
 }
 
@@ -36,6 +38,13 @@ type ScrapeResult struct {
 	Err     error
 }
 
+type FlagConfig struct {
+	endDate       string
+	ignoreTickers map[string]bool
+	mapTickers    map[string]string
+	optionsOnly   bool
+}
+
 func main() {
 	// fetch snapshot view with tickers and last date of available price
 	var IN_CSV = fmt.Sprintf(IN_CSV_FMT, os.Getenv("Username"))
@@ -47,37 +56,41 @@ func main() {
 		os.Mkdir(OUT_CSV_DIR, os.ModeDir)
 	}
 
-	endDate, ignoreTickers, mapTickers := getFlags()
+	flagConf := getFlags()
 
 	resultChan := make(chan ScrapeResult)
 
 	// prepare to collect results fro mscrapping
-	go writeResults(OUT_CSV_DIR, endDate, resultChan)
+	go writeResults(OUT_CSV_DIR, flagConf.endDate, resultChan)
 
 	// scrape all tickers
 
 	for i := range tickers {
 		//for i := 0; i < 5; i++ {
-		if tickers[i].Date == endDate {
+		if tickers[i].Date == flagConf.endDate {
 			continue // history is up to date
 		}
 
+		if flagConf.optionsOnly && !tickers[i].Options {
+			continue // skip non-optionable stock
+		}
+
 		key := fmt.Sprintf("%s_%s", tickers[i].Symbol, tickers[i].Exchange)
-		if _, ok := ignoreTickers[key]; ok {
+		if _, ok := flagConf.ignoreTickers[key]; ok {
 			log.Printf("Ignoring ticker %s", tickers[i].Symbol)
 			continue // skip this ticker
 		}
 
 		// use different symbol if available in mapping file
-		if _, ok := mapTickers[key]; ok {
-			tickers[i].YSymbol = mapTickers[key]
+		if _, ok := flagConf.mapTickers[key]; ok {
+			tickers[i].YSymbol = flagConf.mapTickers[key]
 			log.Printf("Mapped ticker %s to %s", tickers[i].Symbol, tickers[i].YSymbol)
 		} else {
 			tickers[i].YSymbol = tickers[i].Symbol
 		}
 
 		// scrape historical price for ticker since the last date until now
-		go Scrape(tickers[i], endDate, resultChan)
+		go Scrape(tickers[i], flagConf.endDate, resultChan)
 
 		// rate limit scrapping
 		<-time.Tick(1500 * time.Millisecond)
@@ -86,21 +99,26 @@ func main() {
 	close(resultChan)
 }
 
-func getFlags() (string, map[string]bool, map[string]string) {
-	// Yahoo provides history up-to yesterday
-	endDate := time.Now().Add(-24 * time.Hour).Format("02-Jan-2006")
-	// tickers to skip during processing
-	ignoreTickers := make(map[string]bool)
-	mapTickers := make(map[string]string)
+func getFlags() FlagConfig {
 
-	endDatePtr := flag.String("end", endDate, "End Date in DD-MMM-YYYY (02-Jan-2006) format")
+	flagConfig := FlagConfig{
+		// Yahoo provides history up-to yesterday
+		endDate: time.Now().Add(-24 * time.Hour).Format("02-Jan-2006"),
+		// tickers to skip during processing
+		ignoreTickers: make(map[string]bool),
+		mapTickers:    make(map[string]string),
+		optionsOnly:   true,
+	}
+
+	endDatePtr := flag.String("end", flagConfig.endDate, "End Date in DD-MMM-YYYY (02-Jan-2006) format")
 	ignoreFilePtr := flag.String("ignore", "", "CVS file listing tickers to ignore in TICKER,EXCHANGE format")
 	mapFilePtr := flag.String("map", "", "CSV file with ticker mappings in TICKER,EXCHANGE,MAP format")
+	optionsPtr := flag.Bool("optionsOnly", true, "Skip securities without options")
 	flag.Parse()
 
 	if _, err := time.Parse("02-Jan-2006", *endDatePtr); err == nil {
-		endDate = *endDatePtr
-		log.Printf("CONFIG: End date is %v", endDate)
+		flagConfig.endDate = *endDatePtr
+		log.Printf("CONFIG: End date is %v", flagConfig.endDate)
 	}
 
 	if *ignoreFilePtr != "" {
@@ -121,9 +139,9 @@ func getFlags() (string, map[string]bool, map[string]string) {
 			}
 
 			key := fmt.Sprintf("%s_%s", line[0], line[1])
-			ignoreTickers[key] = true
+			flagConfig.ignoreTickers[key] = true
 		}
-		log.Printf("CONFIG: Ignoring %d tickers", len(ignoreTickers))
+		log.Printf("CONFIG: Ignoring %d tickers", len(flagConfig.ignoreTickers))
 	}
 
 	if *mapFilePtr != "" {
@@ -144,12 +162,14 @@ func getFlags() (string, map[string]bool, map[string]string) {
 			}
 
 			key := fmt.Sprintf("%s_%s", line[0], line[1])
-			mapTickers[key] = line[2]
+			flagConfig.mapTickers[key] = line[2]
 		}
-		log.Printf("CONFIG: Mapped %d tickers", len(mapTickers))
+		log.Printf("CONFIG: Mapped %d tickers", len(flagConfig.mapTickers))
 	}
 
-	return endDate, ignoreTickers, mapTickers
+	flagConfig.optionsOnly = *optionsPtr
+
+	return flagConfig
 }
 
 func writeResults(OUT_CSV_DIR string, endDateStr string, resultChan <-chan ScrapeResult) {
@@ -209,10 +229,13 @@ func readCSV(IN_CSV string) []Ticker {
 			log.Fatalln(err)
 		}
 
+		optBool, err := strconv.ParseBool(line[2])
+
 		ticker = append(ticker, Ticker{
 			Symbol:   line[0],
 			Exchange: line[1],
-			Date:     line[2],
+			Options:  optBool,
+			Date:     line[3],
 		})
 	}
 
