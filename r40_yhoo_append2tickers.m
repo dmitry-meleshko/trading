@@ -16,13 +16,12 @@ function [] = r40_yhoo_append2tickers()
 
     % import specs
     % Format string for each line of text:
-    %   column1: text (%s)
-    %	column2: datetimes (%{dd-MMM-yyyy}D)
-    %   column3: double (%f)
-    %	column4: double (%f)
-    %   column5: double (%f)
-    %	column6: double (%f)
-    %   column7: double (%f)
+    %	column1: datetimes (%{dd-MMM-yyyy}D)
+    %   column2: double (%f)
+    %	column3: double (%f)
+    %   column4: double (%f)
+    %	column5: double (%f)
+    %   column6: double (%f)
     % For more information, see the TEXTSCAN documentation.
     formatSpec = '%{dd-MMM-yyyy}D%f%f%f%f%f%[^\n\r]';
     headers = {'Date','Open','High','Low','Close','Volume'};
@@ -68,23 +67,23 @@ function [] = r40_yhoo_append2tickers()
                 last_date = Quotes_Y.Date(1,:);
                 last_row = Quotes(Quotes.Date == last_date,[1:6]);
 
-%                 isSamePrice = true;
-%                 for k = [2:6]   
-%                    if ~isequal(last_row(:,k), Quotes_Y(1,k))
-%                        % big problem: dates matched, but not prices
-%                        % assume the tickers are wrong
-%                        isSamePrice = false;
-%                        break;
-%                    end
-%                 end
-% 
-%                 if ~isSamePrice
-%                     % preserve the data but don't merge
-%                     fname_ERR = fullfile(IN_DIR, sprintf('err_%s_%s.csv', exchange, ticker));
-%                     fprintf('Mismatched data. Saving error in %s file\n', fname_ERR);
-%                     movefile(fname_Y, fname_ERR)
-%                     continue;   % on to the next ticker file
-%                 end
+                isSamePrice = true;
+                for k = [2:6]   
+                   if ~isequal(floor(last_row(:,k)), floor(Quotes_Y(1,k)))
+                       % big problem: dates matched, but not prices
+                       % assume the tickers/exchange is a wrong one
+                       isSamePrice = false;
+                       break;
+                   end
+                end
+
+                if ~isSamePrice
+                    % preserve the data but don't merge
+                    fname_ERR = fullfile(IN_DIR, sprintf('err_%s_%s.csv', exchange, ticker));
+                    fprintf('Mismatched data. Saving error in %s file\n', fname_ERR);
+                    movefile(fname_Y, fname_ERR)
+                    continue;   % on to the next ticker file
+                end
 
                 % fake calculation - just grows the table to matchsize
                 Quotes_Y = extend_quotes_with_volatility(Quotes_Y);
@@ -104,7 +103,7 @@ function [] = r40_yhoo_append2tickers()
 
             fname = fullfile(OUT_DIR, sprintf('%s_%s.mat', exchange, ticker));
             fprintf('Saving %s file\n', fname);
-            save(fname, 'Quotes', '-v7.3');
+            %save(fname, 'Quotes', '-v7.3');
             
             % clean up processed file
             delete(fname_Y);

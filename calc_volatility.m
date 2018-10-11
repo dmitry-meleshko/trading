@@ -24,7 +24,7 @@ function [sigma_year, sigma_daily, sigma_daily_in_base, ...
         %mean_change = mean(log_change);
         sigma_of_log_change = std(log_change);
         skew_daily(i+window) = skewness(log_change, 0);  % zero flag for data sample
-        kurt_daily(i+window) = kurtosis(log_change, 0);
+        kurt_daily(i+window) = kurtosis(log_change, 0)-3;   % Pearson adjusted
         % annualize volatility and save at the end of the window
         sigma_year(i+window) = sigma_of_log_change * sqrt(periods);
         sigma_daily(i+window) = sigma_of_log_change;
