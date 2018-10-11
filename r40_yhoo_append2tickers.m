@@ -68,20 +68,21 @@ function [] = r40_yhoo_append2tickers()
                 last_row = Quotes(Quotes.Date == last_date,[1:6]);
 
                 isSamePrice = true;
-                for k = [2:6]   
-                   if ~isequal(floor(last_row(:,k)), floor(Quotes_Y(1,k)))
+                for k = [2:5]   
+                   if floor(last_row{:,k}) ~= floor(Quotes_Y{1,k})
                        % big problem: dates matched, but not prices
                        % assume the tickers/exchange is a wrong one
                        isSamePrice = false;
+                        % preserve the data but don't merge
+                        fname_ERR = fullfile(IN_DIR, sprintf('err_%s_%s.csv', exchange, ticker));
+                        fprintf('Mismatched data %d and %d. Saving error in %s file\n', ...
+                                    floor(last_row{:,k}), floor(Quotes_Y{1,k}), fname_ERR);
+                        movefile(fname_Y, fname_ERR)
                        break;
                    end
                 end
 
                 if ~isSamePrice
-                    % preserve the data but don't merge
-                    fname_ERR = fullfile(IN_DIR, sprintf('err_%s_%s.csv', exchange, ticker));
-                    fprintf('Mismatched data. Saving error in %s file\n', fname_ERR);
-                    movefile(fname_Y, fname_ERR)
                     continue;   % on to the next ticker file
                 end
 
