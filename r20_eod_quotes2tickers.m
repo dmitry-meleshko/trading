@@ -8,7 +8,7 @@ function [] = r20_eod_quotes2tickers()
         mkdir(OUT_DIR)
     end;
 
-    Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+    Q_SRC = {'NYSE', 'NASDAQ', 'AMEX', 'FOREX', 'INDEX'};
 
     % load previously saved quotes
     QuotesMap = containers.Map();
@@ -23,6 +23,7 @@ function [] = r20_eod_quotes2tickers()
 
         tickers = unique(QM.Symbol);    % extract tickers
         for i = 1:length(tickers)
+            tic
             T = tickers{i};
 
             % filter by ticker and extract date, prices and volume
@@ -32,7 +33,8 @@ function [] = r20_eod_quotes2tickers()
 
             fname = fullfile(OUT_DIR, sprintf('%s_%s.mat', exchange, T));
             fprintf('Saving %s file\n', fname);
-            %save(fname, 'Quotes', '-v7.3');
+            save(fname, 'Quotes', '-v7.3');
+            toc
         end
     end
 end
