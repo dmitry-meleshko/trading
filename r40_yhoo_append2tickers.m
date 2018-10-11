@@ -68,7 +68,7 @@ function [] = r40_yhoo_append2tickers()
                 last_row = Quotes(Quotes.Date == last_date,[1:6]);
 
                 isSamePrice = true;
-                for k = [2:5]   
+                for k = [2:4] % check open, high, low. Skip adjusted close
                    if floor(last_row{:,k}) ~= floor(Quotes_Y{1,k})
                        % big problem: dates matched, but not prices
                        % assume the tickers/exchange is a wrong one
