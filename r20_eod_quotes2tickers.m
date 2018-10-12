@@ -9,14 +9,16 @@ function [] = r20_eod_quotes2tickers()
     end;
 
     Q_SRC = {'NYSE', 'NASDAQ', 'AMEX', 'FOREX', 'INDEX'};
-
-    % load previously saved quotes
-    QuotesMap = containers.Map();
-    load_quotes(QuotesMap, IN_DIR, Q_SRC);
+    Q_SRC = {'NYSE', 'NASDAQ', 'AMEX'};
 
     % load previously saved quotes from Exchange files
     for k = Q_SRC
         exchange = k{:};
+        
+        % load previously saved quotes
+        QuotesMap = containers.Map();
+        load_quotes(QuotesMap, IN_DIR, exchange);
+         
         if (~isKey(QuotesMap, exchange)); continue; end;
 
         QM = QuotesMap(exchange);
@@ -38,14 +40,12 @@ function [] = r20_eod_quotes2tickers()
 end
 
 
-function [] = load_quotes(QuotesMap, Q_DIR, Q_SRC)
-    % take quotes data from MAT files and save in a map file
-    for key = Q_SRC
-        fname = fullfile(Q_DIR, sprintf('quotes_%s.mat', key{:}));
-        if exist(fname, 'file') == 2
-            fprintf('Loading %s file\n', fname);
-            load(fname);
-            QuotesMap(key{:}) = eval(key{:}); % yeah, eval is evil.
-        end
+function [] = load_quotes(QuotesMap, Q_DIR, exchange)
+    % take quotes data from MAT files and 
+    fname = fullfile(Q_DIR, sprintf('quotes_%s.mat', exchange));
+    if exist(fname, 'file') == 2
+        fprintf('Loading %s file\n', fname);
+        load(fname);
+        QuotesMap(exchange) = eval(exchange); % yeah, eval is evil.
     end
 end
