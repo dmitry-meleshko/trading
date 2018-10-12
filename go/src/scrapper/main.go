@@ -103,7 +103,7 @@ func getFlags() FlagConfig {
 
 	flagConfig := FlagConfig{
 		// Yahoo provides history up-to yesterday
-		endDate: time.Now().Add(-24 * time.Hour).Format("02-Jan-2006"),
+		endDate: time.Now().Format("02-Jan-2006"),
 		// tickers to skip during processing
 		ignoreTickers: make(map[string]bool),
 		mapTickers:    make(map[string]string),
