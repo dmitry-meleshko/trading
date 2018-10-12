@@ -1,8 +1,8 @@
 %%
 clear all; clc;
 
-ticker =  'FDS';
-days = 252  * 2; % how many days to load
+ticker =  'GLD';
+days = 252 * 15; % how many days to load
 
 IN_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes', getenv('Username'));
 Q_SRC = {'NYSE', 'NASDAQ', 'AMEX'};
@@ -20,8 +20,10 @@ for k = Q_SRC
 end
 
 %% Charting
-
-Series = Quotes(end-days:end, :);
+Series = Quotes(1:end, :);
+if height(Quotes) > days
+    Series = Quotes(end-days:end, :);
+end
 
 %date = datetime(Series.Date);  % incompatible with bar()?
 dateNum = datenum(Series.Date);
