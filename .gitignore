@@ -1,2 +1,5 @@
 bin/
 *.exe
+go/pkg
+go/src/golang.org
+go/src/github.com
