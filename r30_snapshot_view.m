@@ -7,17 +7,27 @@ function [] = r30_snapshot_view()
     clc; clear; close all;
 
     IN_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\quotes', getenv('Username'));
-    OUT_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\views', getenv('Username'));
-    if (~exist(OUT_DIR, 'dir'))
-        mkdir(OUT_DIR)
+    VIEW_DIR = sprintf('C:\\Users\\%s\\Desktop\\EODData\\views', getenv('Username'));
+    if (~exist(VIEW_DIR, 'dir'))
+        mkdir(VIEW_DIR)
     end;
     SNAP_COLS = 33;    % number of columns in snapshot view
     
-    optionsSymb = fetchOptionsTickers(OUT_DIR);
+    optionsSymb = fetchOptionsTickers(VIEW_DIR);
 
-    Q_SRC = {'AMEX', 'NASDAQ', 'NYSE', 'FOREX', 'INDEX'};
+    Q_SRC = {'YHOO'}; %, 'AMEX', 'NASDAQ', 'NYSE'}; %, 'FOREX', 'INDEX'};
 
-    snapshot_cells = cell(0, SNAP_COLS);   % declare empty cell array to hold snapshot
+    % declare empty cell array to hold snapshot
+    snapshot_cells = cell(0, SNAP_COLS);
+    % add missing tickers to the top of the list
+    miss_opts = getMissingOptions(VIEW_DIR);
+    for i = 1:length(miss_opts)
+        c = cell(1, SNAP_COLS-4);
+        c(1,:) = {0};
+        snapshot_cells(end+1,:) = {miss_opts{i}, 'YHOO', 1, ...
+            datetime('01-Jan-1970','InputFormat','dd-MMM-yyyy'), c{:}};
+    end
+
     % take quotes data from MAT files and save in a map file
     for key = Q_SRC
         exchange = key{:};
@@ -61,13 +71,22 @@ function [] = r30_snapshot_view()
     % sort by Exchange, Date, Ticker
     SummaryView = sortrows(SummaryView, [4, 2, 1], {'descend' 'descend' 'ascend'} );
 
-    fname = fullfile(OUT_DIR, 'SummaryView.mat');
+    fname = fullfile(VIEW_DIR, 'SummaryView.mat');
     fprintf('Saving %s file\n', fname);
     save(fname, 'SummaryView', '-v7.3');    % .mat file
-    fname = fullfile(OUT_DIR, 'SummaryView.csv');
+    fname = fullfile(VIEW_DIR, 'SummaryView.csv');
     writetable(SummaryView, fname);
 
     % the end
+end
+
+
+function [tickerCells] = getMissingOptions(VIEW_DIR)
+    % Take a list of missing tickers and prepend them to the list
+    fname = fullfile(VIEW_DIR, 'missing.txt');
+    fprintf('Loading missing tickers from %s\n', fname);
+    data = fileread(fname);
+    tickerCells = strsplit(data);
 end
 
 

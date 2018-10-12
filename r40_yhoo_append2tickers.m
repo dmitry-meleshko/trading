@@ -11,8 +11,8 @@ function [] = r40_yhoo_append2tickers()
     
     ANNUAL_DAYS = 252;  % that's how many *trading* days there are
 
-    %Q_SRC = {'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
-    Q_SRC = {'AMEX', 'NASDAQ', 'NYSE'};
+    %Q_SRC = {'YHOO', 'AMEX', 'FOREX', 'INDEX', 'NASDAQ', 'NYSE'};
+    Q_SRC = {'YHOO', 'AMEX', 'NASDAQ', 'NYSE'};
 
     % import specs
     % Format string for each line of text:
@@ -66,22 +66,22 @@ function [] = r40_yhoo_append2tickers()
                 % glue two datasets using last date from Y snapshot
                 last_date = Quotes_Y.Date(1,:);
                 last_row = Quotes(Quotes.Date == last_date,[1:6]);
-
+    
                 isSamePrice = true;
                 for k = [2:4] % check open, high, low. Skip adjusted close
-                   if floor(last_row{:,k}) ~= floor(Quotes_Y{1,k})
-                       % big problem: dates matched, but not prices
-                       % assume the tickers/exchange is a wrong one
-                       isSamePrice = false;
+                    if floor(last_row{:,k}) ~= floor(Quotes_Y{1,k})
+                        % big problem: dates matched, but not prices
+                        % assume the tickers/exchange is a wrong one
+                        isSamePrice = false;
                         % preserve the data but don't merge
                         fname_ERR = fullfile(IN_DIR, sprintf('err_%s_%s.csv', exchange, ticker));
                         fprintf('Mismatched data %d and %d. Saving error in %s file\n', ...
-                                    floor(last_row{:,k}), floor(Quotes_Y{1,k}), fname_ERR);
+                            floor(last_row{:,k}), floor(Quotes_Y{1,k}), fname_ERR);
                         movefile(fname_Y, fname_ERR)
-                       break;
-                   end
+                        break;
+                    end
                 end
-
+                
                 if ~isSamePrice
                     continue;   % on to the next ticker file
                 end
@@ -95,7 +95,7 @@ function [] = r40_yhoo_append2tickers()
             end
 
             
-            % recalculate vol, but a most since last year
+            % recalculate vol, but at most since last year
             startIndex = height(Quotes) - ANNUAL_DAYS;
             if startIndex < 1
                 startIndex = 1;
@@ -104,7 +104,7 @@ function [] = r40_yhoo_append2tickers()
 
             fname = fullfile(OUT_DIR, sprintf('%s_%s.mat', exchange, ticker));
             fprintf('Saving %s file\n', fname);
-            %save(fname, 'Quotes', '-v7.3');
+            save(fname, 'Quotes', '-v7.3');
             
             % clean up processed file
             delete(fname_Y);
