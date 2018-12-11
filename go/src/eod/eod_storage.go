@@ -15,14 +15,17 @@ var (
 func StorageSink(chPrices <-chan EODPrice) {
 	defer db.Close() // connection is open from init()
 
+	db.Prepare("select symbol_id, symbol, exchange, optionable, y_symbol " +
+		"from symbol where symbol = ? and exchange = ?")
+
 	fmt.Println("Started StorageSink()")
 	for price := range chPrices {
-		fmt.Println("Data: %v", price)
+		log.Println("Data: %v", price)
 
 		// get ID for the ticker
 		symId, err := getSymbolIdCache(price.Symbol, price.Exchange)
 		if err != nil {
-			fmt.Println("Failed in getSymbolIdCache(): %v", err)
+			log.Println("Failed in getSymbolIdCache(): %v", err)
 			continue
 		}
 
@@ -35,7 +38,7 @@ func StorageSink(chPrices <-chan EODPrice) {
 			Volume: price.Volume,
 		}
 		if err = addPriceDay(symId, *pd); err != nil {
-			fmt.Println("Failed to add price for ticker %s/%s to database: %v", price.Symbol, price.Exchange, err)
+			log.Println("Failed to add price for ticker %s/%s to database: %v", price.Symbol, price.Exchange, err)
 			continue
 		}
 	}
@@ -45,7 +48,9 @@ func StorageSink(chPrices <-chan EODPrice) {
 func init() {
 	connStr := fmt.Sprintf("dbname=%s host=%s port=%s user=%s password=%s dbname=%s "+
 		"sslmode=disable", DB_NAME, DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME)
-	db, err := sql.Open("postgres", connStr)
+
+	var err error // a trick to force global "db" var assignment
+	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		panic(fmt.Errorf("Failed to open DB connection: %v", err))
 	}
@@ -89,7 +94,7 @@ func getSymbol(ticker string, exchange string) (*Symbol, error) {
 	var s Symbol
 
 	stmt, err := db.Prepare("select symbol_id, symbol, exchange, optionable, y_symbol " +
-		"from symbol where symbol = ? and exchange = ?")
+		"from symbol where symbol = $1 and exchange = $2")
 	if err != nil {
 		return nil, err
 	}
@@ -108,16 +113,15 @@ func addSymbol(s Symbol) (int, error) {
 	var symId int
 
 	stmt, err := db.Prepare("insert into symbol (symbol, exchange, optionable, y_symbol) " +
-		"select ?, ?, ?, ? where not exists " +
-		"(select id from symbol where symbol = ? and exchange = ?) " +
+		"select $1, $2, $3, $4 where not exists " +
+		"(select id from symbol where symbol = $1 and exchange = $2) " +
 		"returning symbol_id")
 	if err != nil {
 		return -1, err
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(s.Symbol, s.Exchange, s.Optionable, s.YSymbol,
-		s.Symbol, s.Exchange).Scan(&symId)
+	err = stmt.QueryRow(s.Symbol, s.Exchange, s.Optionable, s.YSymbol).Scan(&symId)
 	if err != nil {
 		return -1, err
 	}
@@ -139,8 +143,8 @@ func addSymbol(s Symbol) (int, error) {
 }
 
 func updateSymbol(s Symbol) error {
-	stmt, err := db.Prepare("update symbol set optionable = ?, y_symbol = ? " +
-		"where symbol_id = ?")
+	stmt, err := db.Prepare("update symbol set optionable = $1, y_symbol = $2 " +
+		"where symbol_id = $3")
 	if err != nil {
 		return err
 	}
@@ -167,7 +171,7 @@ func getPriceDay(s Symbol, startDate string, endDate string) ([]PriceDaily, erro
 
 	stmt, err := db.Prepare("select pd.price_id, pd.day, pd.open, pd.high, pd.low, pd.close, pd.volume " +
 		"from price_day pd join symbol s on s.symbol_id = pd.symbol_id " +
-		"where s.Symbol = ? and s.Exchange = ? and pd.day between ? and ?")
+		"where s.Symbol = $1 and s.Exchange = $2 and pd.day between $3 and $4")
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +200,7 @@ func getPriceDay(s Symbol, startDate string, endDate string) ([]PriceDaily, erro
 
 func addPriceDay(symId int, pd PriceDaily) error {
 	stmt, err := db.Prepare("insert into price_day (symbol_id, day, open, high, low, close, volume) " +
-		"values (?, ?, ?, ?, ?, ?, ?) returning price_id")
+		"values ($1, $2, $3, $4, $5, $6, $7) returning price_id")
 	if err != nil {
 		return err
 	}

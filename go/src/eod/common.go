@@ -9,6 +9,7 @@ import (
 const (
 	IN_DIR_FMT  = "C:\\Users\\%s\\Desktop\\EODData\\in"
 	OUT_DIR_FMT = "C:\\Users\\%s\\Desktop\\EODData\\processed"
+	LOG_FILE    = "eod.log"
 )
 
 var (
