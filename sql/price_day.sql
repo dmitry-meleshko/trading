@@ -11,5 +11,5 @@ create table price_day (
 	volume		bigserial		-- account for Indicies and growth
 );
 
-CREATE INDEX price_day_IX_symbol_id ON price_day (symbol_id, day);
+CREATE UNIQUE INDEX price_day_IX_symbol_id ON price_day (symbol_id, day);
 CREATE INDEX price_day_IX_day ON price_day (day, symbol_id);
