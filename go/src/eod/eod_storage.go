@@ -20,7 +20,7 @@ func StorageSink(chPrices <-chan EODPrice) {
 
 	fmt.Println("Started StorageSink()")
 	for price := range chPrices {
-		log.Println("Data: %v", price)
+		//log.Println("Data: %v", price)
 
 		// get ID for the ticker
 		symId, err := getSymbolIdCache(price.Symbol, price.Exchange)
@@ -59,6 +59,8 @@ func init() {
 		db.Close()
 		panic(fmt.Errorf("Failed to ping on DB connection: %v", err))
 	}
+
+	symCache = make(map[string]int)
 }
 
 func getSymbolIdCache(ticker string, exchange string) (int, error) {
@@ -103,7 +105,9 @@ func getSymbol(ticker string, exchange string) (*Symbol, error) {
 	err = stmt.QueryRow(ticker, exchange).Scan(&s.Id, &s.Symbol, &s.Exchange,
 		&s.Optionable, &s.YSymbol)
 	if err != nil {
-		return nil, err
+		if err != sql.ErrNoRows {
+			return nil, err
+		}
 	}
 
 	return &s, nil
@@ -113,15 +117,22 @@ func addSymbol(s Symbol) (int, error) {
 	var symId int
 
 	stmt, err := db.Prepare("insert into symbol (symbol, exchange, optionable, y_symbol) " +
-		"select $1, $2, $3, $4 where not exists " +
-		"(select id from symbol where symbol = $1 and exchange = $2) " +
+		"select cast($1 as varchar), cast($2 as varchar), cast($3 as bit), cast($4 as varchar) " +
+		" where not exists " +
+		"(select symbol_id from symbol where symbol = $1 and exchange = $2) " +
 		"returning symbol_id")
 	if err != nil {
 		return -1, err
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(s.Symbol, s.Exchange, s.Optionable, s.YSymbol).Scan(&symId)
+	// cast boolean to int for SQL processing
+	option := 0
+	if s.Optionable {
+		option = 1
+	}
+
+	err = stmt.QueryRow(s.Symbol, s.Exchange, option, s.YSymbol).Scan(&symId)
 	if err != nil {
 		return -1, err
 	}
@@ -150,7 +161,13 @@ func updateSymbol(s Symbol) error {
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(s.Optionable, s.YSymbol, s.Id)
+	// cast boolean to int for SQL processing
+	option := 0
+	if s.Optionable {
+		option = 1
+	}
+
+	res, err := stmt.Exec(option, s.YSymbol, s.Id)
 	if err != nil {
 		return err
 	}

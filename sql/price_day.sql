@@ -14,4 +14,5 @@ create table price_day (
 CREATE UNIQUE INDEX price_day_IX_symbol_id ON price_day (symbol_id, day);
 CREATE INDEX price_day_IX_day ON price_day (day, symbol_id);
 
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO apical_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO apical_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO apical_user;
