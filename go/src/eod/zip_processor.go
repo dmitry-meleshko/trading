@@ -36,7 +36,7 @@ func ProcessZips(chPrices chan<- EODPrice, chDone chan<- bool) {
 		if err != nil {
 			log.Printf("Failed to move ZIP file %s: %v", srcName, err)
 		}
-		fmt.Println("Processed: " + f.Name() + "\n")
+		fmt.Println("Processed: " + f.Name())
 	}
 
 	// shut down the pipeline

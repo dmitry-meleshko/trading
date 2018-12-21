@@ -120,6 +120,8 @@ func addSymbol(s Symbol) (int, error) {
 		"select cast($1 as varchar), cast($2 as varchar), cast($3 as bit), cast($4 as varchar) " +
 		" where not exists " +
 		"(select symbol_id from symbol where symbol = $1 and exchange = $2) " +
+		"on conflict (symbol, exchange) do update " +
+		"set optionable=excluded.optionable, y_symbol=excluded.y_symbol " +
 		"returning symbol_id")
 	if err != nil {
 		return -1, err
@@ -217,7 +219,10 @@ func getPriceDay(s Symbol, startDate string, endDate string) ([]PriceDaily, erro
 
 func addPriceDay(symId int, pd PriceDaily) error {
 	stmt, err := db.Prepare("insert into price_day (symbol_id, day, open, high, low, close, volume) " +
-		"values ($1, $2, $3, $4, $5, $6, $7) returning price_id")
+		"values ($1, $2, $3, $4, $5, $6, $7) " +
+		"on conflict (symbol_id, day) do update set open=excluded.open, high=excluded.high, " +
+		"low=excluded.low, close = excluded.close, volume=excluded.volume " +
+		"returning price_id")
 	if err != nil {
 		return err
 	}

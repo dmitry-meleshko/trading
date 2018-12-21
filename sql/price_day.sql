@@ -4,10 +4,10 @@ create table price_day (
 	symbol_id	serial not null,
 	CONSTRAINT	price_FK_symbol_id FOREIGN KEY (symbol_id) REFERENCES symbol (symbol_id),
 	day 		date not null,
-	open		numeric(12,4),	-- account for FOREX
-	high		numeric(12,4),
-	low			numeric(12,4),
-	close		numeric(12,4),
+	open		numeric(13,4),	-- account for FOREX
+	high		numeric(13,4),
+	low			numeric(13,4),
+	close		numeric(13,4),
 	volume		bigserial		-- account for Indicies and growth
 );
 
