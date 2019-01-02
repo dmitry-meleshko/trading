@@ -1,7 +1,7 @@
 package main
 
 import (
-	"eod"
+	"apical"
 	"fmt"
 	"io"
 	"log"
@@ -11,7 +11,7 @@ import (
 func main() {
 	fmt.Println("Started main()")
 
-	logFile, err := os.OpenFile(eod.LOG_FILE, os.O_CREATE|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(apical.LOG_FILE, os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,14 +20,14 @@ func main() {
 	log.SetOutput(w)
 
 	// set up data channel
-	chPrice := make(chan eod.EODPrice, 100)
+	chPrice := make(chan apical.EODPrice, 100)
 	chDone := make(chan bool)
 
 	// start background worker for data processing
-	go eod.StorageSink(chPrice)
+	go apical.StorageSink(chPrice)
 
 	// kick off Zip files processing
-	go eod.ProcessZips(chPrice, chDone)
+	go apical.ProcessZips(chPrice, chDone)
 
 	<-chDone
 

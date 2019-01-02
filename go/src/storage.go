@@ -1,4 +1,4 @@
-package eod
+package apical
 
 import (
 	"database/sql"
