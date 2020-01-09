@@ -26,13 +26,15 @@ query = ['SELECT price_id, to_char("day", ''DD-Mon-YYYY'') as "day", '...
     'WHERE s.symbol_id = ', sym_id, ...
     'ORDER BY pd.day'];
 
-dr = fetch(conn, query);
+%dr = fetch(conn, query);
+dr = select(conn, query);
 
 % convert date formats
 %dr(:, 2) = datestr(dr{:, 2}, 'dd-mmm-yyyy')
 
-Quotes = cell2table(dr,  'VariableNames', ...
-    {'PriceId' 'Date' 'Open' 'High' 'Low' 'Close' 'Volume'});
+Quotes = timetable(datetime(dr.day), dr.price_id, dr.open, dr.high, ...
+    dr.low, dr.close, dr.volume, 'VariableNames', ...
+    {'PriceId', 'Open', 'High', 'Low', 'Close', 'Volume'});
 
 Quotes = extend_quotes_with_volatility(Quotes);
 
