@@ -1,4 +1,4 @@
-package apical
+package prices
 
 import (
 	"fmt"
@@ -7,25 +7,28 @@ import (
 
 // file locations
 const (
-	IN_DIR_FMT  = "C:\\Users\\%s\\Desktop\\EODData\\in"
-	OUT_DIR_FMT = "C:\\Users\\%s\\Desktop\\EODData\\processed"
-	LOG_FILE    = "eod.log"
+	InDirFmt  = "C:\\Users\\%s\\Desktop\\EODData\\in"
+	OutDirFmt = "C:\\Users\\%s\\Desktop\\EODData\\processed"
+	LogFile   = "eod.log"
 )
 
 var (
-	IN_DIR  string
-	OUT_DIR string
+	// InDir is where EOD ZIP files to be imported are stored
+	InDir string
+	// OutDir is where processed ZIP files are dumped
+	OutDir string
 )
 
 // DB specific
 const (
-	DB_USER = "apical_user"
-	DB_PASS = "XghJ4cf%Q3"
-	DB_NAME = "apical"
-	DB_HOST = "localhost"
-	DB_PORT = "5432"
+	DbUser = "apical_user"
+	DbPass = "XghJ4cf%Q3"
+	DbName = "apical"
+	DbHost = "localhost"
+	DbPort = "5432"
 )
 
+// EODPrice maps price data as it's presented in EOD zip/csv files
 type EODPrice struct {
 	Symbol   string
 	Exchange string
@@ -37,8 +40,9 @@ type EODPrice struct {
 	Volume   string
 }
 
+// Symbol maps ticker's data as it's tored in a database
 type Symbol struct {
-	Id         int
+	ID         int
 	Symbol     string
 	YSymbol    string
 	Exchange   string
@@ -46,8 +50,9 @@ type Symbol struct {
 	Date       string
 }
 
+// PriceDaily maps price data as it's stored in a database
 type PriceDaily struct {
-	Id     int
+	ID     int
 	Date   string
 	Open   string
 	High   string
@@ -56,12 +61,13 @@ type PriceDaily struct {
 	Volume string
 }
 
+// SymbolPrices holds ticker data along with daily price hitory
 type SymbolPrices struct {
 	Symbol Symbol
 	Prices []PriceDaily
 }
 
 func init() {
-	IN_DIR = fmt.Sprintf(IN_DIR_FMT, os.Getenv("Username"))
-	OUT_DIR = fmt.Sprintf(OUT_DIR_FMT, os.Getenv("Username"))
+	InDir = fmt.Sprintf(InDirFmt, os.Getenv("Username"))
+	OutDir = fmt.Sprintf(OutDirFmt, os.Getenv("Username"))
 }

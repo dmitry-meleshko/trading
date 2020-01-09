@@ -1,10 +1,11 @@
-package apical
+package prices
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
+
+	_ "github.com/lib/pq" // blank import as per documentation
 )
 
 var (
@@ -12,6 +13,9 @@ var (
 	symCache map[string]int
 )
 
+/*
+StorageSink is an entry point for storing prices in a database
+*/
 func StorageSink(chPrices <-chan EODPrice) {
 	defer db.Close() // connection is open from init()
 
@@ -23,9 +27,9 @@ func StorageSink(chPrices <-chan EODPrice) {
 		//log.Println("Data: %v", price)
 
 		// get ID for the ticker
-		symId, err := getSymbolIdCache(price.Symbol, price.Exchange)
+		symID, err := getSymbolIDCache(price.Symbol, price.Exchange)
 		if err != nil {
-			log.Println("Failed in getSymbolIdCache(): %v", err)
+			log.Printf("Failed in getSymbolIDCache(): %v\n", err)
 			continue
 		}
 
@@ -37,8 +41,8 @@ func StorageSink(chPrices <-chan EODPrice) {
 			Close:  price.Close,
 			Volume: price.Volume,
 		}
-		if err = addPriceDay(symId, *pd); err != nil {
-			log.Println("Failed to add price for ticker %s/%s to database: %v", price.Symbol, price.Exchange, err)
+		if err = addPriceDay(symID, *pd); err != nil {
+			log.Printf("Failed to add price for ticker %s/%s to database: %v\n", price.Symbol, price.Exchange, err)
 			continue
 		}
 	}
@@ -47,7 +51,7 @@ func StorageSink(chPrices <-chan EODPrice) {
 
 func init() {
 	connStr := fmt.Sprintf("dbname=%s host=%s port=%s user=%s password=%s dbname=%s "+
-		"sslmode=disable", DB_NAME, DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME)
+		"sslmode=disable", DbName, DbHost, DbPort, DbUser, DbPass, DbName)
 
 	var err error // a trick to force global "db" var assignment
 	db, err = sql.Open("postgres", connStr)
@@ -63,33 +67,33 @@ func init() {
 	symCache = make(map[string]int)
 }
 
-func getSymbolIdCache(ticker string, exchange string) (int, error) {
-	sym_key := fmt.Sprintf("%s/%s", ticker, exchange)
-	symId := symCache[sym_key]
+func getSymbolIDCache(ticker string, exchange string) (int, error) {
+	symKey := fmt.Sprintf("%s/%s", ticker, exchange)
+	symID := symCache[symKey]
 
-	if symId == 0 { // cache's empty
+	if symID == 0 { // cache's empty
 		sym, err := getSymbol(ticker, exchange)
 		if err != nil {
 			return -1, fmt.Errorf("Failed to fetch symbol %s/%s: %v", ticker, exchange, err)
 		}
-		if sym.Id > 0 {
-			symCache[sym_key] = sym.Id
-			symId = sym.Id
+		if sym.ID > 0 {
+			symCache[symKey] = sym.ID
+			symID = sym.ID
 		} else {
 			// no such ticker exists
 			sym := &Symbol{
 				Symbol:   ticker,
 				Exchange: exchange,
 			}
-			symId, err = addSymbol(*sym)
+			symID, err = addSymbol(*sym)
 			if err != nil {
 				return -1, fmt.Errorf("Failed to add symbol %s/%s to database: %v", ticker, exchange, err)
 			}
-			symCache[sym_key] = symId
+			symCache[symKey] = symID
 		}
 	}
 
-	return symId, nil
+	return symID, nil
 }
 
 func getSymbol(ticker string, exchange string) (*Symbol, error) {
@@ -102,7 +106,7 @@ func getSymbol(ticker string, exchange string) (*Symbol, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(ticker, exchange).Scan(&s.Id, &s.Symbol, &s.Exchange,
+	err = stmt.QueryRow(ticker, exchange).Scan(&s.ID, &s.Symbol, &s.Exchange,
 		&s.Optionable, &s.YSymbol)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -114,7 +118,7 @@ func getSymbol(ticker string, exchange string) (*Symbol, error) {
 }
 
 func addSymbol(s Symbol) (int, error) {
-	var symId int
+	var symID int
 
 	stmt, err := db.Prepare("insert into symbol (symbol, exchange, optionable, y_symbol) " +
 		"select cast($1 as varchar), cast($2 as varchar), cast($3 as bit), cast($4 as varchar) " +
@@ -134,25 +138,25 @@ func addSymbol(s Symbol) (int, error) {
 		option = 1
 	}
 
-	err = stmt.QueryRow(s.Symbol, s.Exchange, option, s.YSymbol).Scan(&symId)
+	err = stmt.QueryRow(s.Symbol, s.Exchange, option, s.YSymbol).Scan(&symID)
 	if err != nil {
 		return -1, err
 	}
 
 	// TODO: debug this, what's going on with RowsAffected?
 	// no records added
-	if symId <= 0 {
+	if symID <= 0 {
 		log.Printf("Failed to add a new symbol - duplicate record for %s/%s ", s.Symbol, s.Exchange)
 		newSym, err := getSymbol(s.Symbol, s.Exchange)
 		if err != nil {
 			return -1, err
 		}
-		if newSym.Id > 0 {
-			symId = newSym.Id
+		if newSym.ID > 0 {
+			symID = newSym.ID
 		}
 	}
 
-	return symId, nil
+	return symID, nil
 }
 
 func updateSymbol(s Symbol) error {
@@ -169,7 +173,7 @@ func updateSymbol(s Symbol) error {
 		option = 1
 	}
 
-	res, err := stmt.Exec(option, s.YSymbol, s.Id)
+	res, err := stmt.Exec(option, s.YSymbol, s.ID)
 	if err != nil {
 		return err
 	}
@@ -179,7 +183,7 @@ func updateSymbol(s Symbol) error {
 	}
 
 	if rowCnt <= 0 {
-		return fmt.Errorf("UPDATE for symbol %d (%s/%s) has failed.", s.Id, s.Symbol, s.Exchange)
+		return fmt.Errorf("UPDATE for symbol %d (%s/%s) has failed", s.ID, s.Symbol, s.Exchange)
 	}
 
 	return nil
@@ -188,7 +192,7 @@ func updateSymbol(s Symbol) error {
 func getPriceDay(s Symbol, startDate string, endDate string) ([]PriceDaily, error) {
 	var prices []PriceDaily
 
-	stmt, err := db.Prepare("select pd.price_id, pd.day, pd.open, pd.high, pd.low, pd.close, pd.volume " +
+	stmt, err := db.Prepare("select pd.price_ID, pd.day, pd.open, pd.high, pd.low, pd.close, pd.volume " +
 		"from price_day pd join symbol s on s.symbol_id = pd.symbol_id " +
 		"where s.Symbol = $1 and s.Exchange = $2 and pd.day between $3 and $4")
 	if err != nil {
@@ -204,7 +208,7 @@ func getPriceDay(s Symbol, startDate string, endDate string) ([]PriceDaily, erro
 
 	for rows.Next() {
 		var p PriceDaily
-		err := rows.Scan(&p.Id, &p.Date, &p.Open, &p.High, &p.Low, &p.Close, &p.Volume)
+		err := rows.Scan(&p.ID, &p.Date, &p.Open, &p.High, &p.Low, &p.Close, &p.Volume)
 		if err != nil {
 			log.Printf("Failed to fetch price record for %s/%s: %v", s.Symbol, s.Exchange, err)
 		}
@@ -217,24 +221,24 @@ func getPriceDay(s Symbol, startDate string, endDate string) ([]PriceDaily, erro
 	return prices, nil
 }
 
-func addPriceDay(symId int, pd PriceDaily) error {
+func addPriceDay(symID int, pd PriceDaily) error {
 	stmt, err := db.Prepare("insert into price_day (symbol_id, day, open, high, low, close, volume) " +
 		"values ($1, $2, $3, $4, $5, $6, $7) " +
 		"on conflict (symbol_id, day) do update set open=excluded.open, high=excluded.high, " +
 		"low=excluded.low, close = excluded.close, volume=excluded.volume " +
-		"returning price_id")
+		"returning price_ID")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
 	//for _, p := range pd {
-	err = stmt.QueryRow(symId, pd.Date, pd.Open, pd.High, pd.Low, pd.Close, pd.Volume).Scan(&pd.Id)
+	err = stmt.QueryRow(symID, pd.Date, pd.Open, pd.High, pd.Low, pd.Close, pd.Volume).Scan(&pd.ID)
 	if err != nil {
 		return err
 	}
-	if pd.Id <= 0 {
-		log.Printf("Failed to add daily price for symbol ID %d: %v ", symId, pd.Date)
+	if pd.ID <= 0 {
+		log.Printf("Failed to add daily price for symbol ID %d: %v ", symID, pd.Date)
 	}
 	//}
 

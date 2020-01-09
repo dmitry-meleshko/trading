@@ -1,4 +1,4 @@
-package apical
+package prices
 
 import (
 	"archive/zip"
@@ -13,11 +13,14 @@ import (
 	"strings"
 )
 
+/*
+ProcessZips is an entry point for processing EOD zip files.
+*/
 func ProcessZips(chPrices chan<- EODPrice, chDone chan<- bool) {
 	fmt.Println("Started ProcessZips()")
-	files, err := ioutil.ReadDir(IN_DIR)
+	files, err := ioutil.ReadDir(InDir)
 	if err != nil {
-		panic(fmt.Errorf("Failed to read directory %s: %v", IN_DIR, err))
+		panic(fmt.Errorf("Failed to read directory %s: %v", InDir, err))
 	}
 
 	for _, f := range files {
@@ -25,8 +28,8 @@ func ProcessZips(chPrices chan<- EODPrice, chDone chan<- bool) {
 			continue // skip over non-zip files
 		}
 		// parse ZIP file and move to Processed directory
-		srcName := filepath.FromSlash(IN_DIR + "/" + f.Name())
-		destName := filepath.FromSlash(OUT_DIR + "/" + f.Name())
+		srcName := filepath.FromSlash(InDir + "/" + f.Name())
+		destName := filepath.FromSlash(OutDir + "/" + f.Name())
 		err := unzipNStore(srcName, chPrices)
 		if err != nil {
 			log.Printf("Failed to process ZIP file %s: %v", srcName, err)

@@ -1,17 +1,17 @@
 package main
 
 import (
-	"apical"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"prices"
 )
 
 func main() {
 	fmt.Println("Started main()")
 
-	logFile, err := os.OpenFile(apical.LOG_FILE, os.O_CREATE|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(prices.LogFile, os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,14 +20,14 @@ func main() {
 	log.SetOutput(w)
 
 	// set up data channel
-	chPrice := make(chan apical.EODPrice, 100)
+	chPrice := make(chan prices.EODPrice, 100)
 	chDone := make(chan bool)
 
 	// start background worker for data processing
-	go apical.StorageSink(chPrice)
+	go prices.StorageSink(chPrice)
 
 	// kick off Zip files processing
-	go apical.ProcessZips(chPrice, chDone)
+	go prices.ProcessZips(chPrice, chDone)
 
 	<-chDone
 
